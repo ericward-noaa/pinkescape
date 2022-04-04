@@ -38,7 +38,7 @@ df = sim(
 
 ## Plotting output
 
-```{r, eval=FALSE}
+```{r, eval=TRUE}
 library(ggplot2)
 p1 <- ggplot(df, aes(t, regime)) + geom_point() + geom_line() +
   theme_bw() + xlab("Time") + ylab("Regime")
@@ -53,3 +53,17 @@ p5 <- ggplot(df, aes(t, harvest)) + geom_point() + geom_line() +
 gridExtra::grid.arrange(p1,p2,p3,p4,p5,ncol=2)
 ```
   
+## Calculating net benefits across simulations
+
+```{r, eval=TRUE}
+# calculate product
+df$discount_nb = df$net_benefits*df$discount
+
+# calculate the sum for each simulation
+library(dplyr)
+summary = dplyr::group_by(df, sim) %>% 
+dplyr::summarise(tot_ben = sum(discount_nb))
+ 
+ggplot(summary, aes(tot_ben)) + geom_histogram() + 
+xlab("Total benefits")
+```
