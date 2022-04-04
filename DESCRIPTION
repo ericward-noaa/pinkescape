@@ -1,0 +1,25 @@
+Package: pinkescape
+Type: Package
+Title: Simulate Pink Salmon Escapement
+Version: 0.0.1
+Authors@R: as.person(c("Eric Ward <eric.ward@noaa.gov> [aut, cre]"))
+Maintainer: Eric Ward <eric.ward@noaa.gov>
+Description: The package simulates pink salmon escapement across multiple regimes
+License: GPL (>=3)
+Depends:
+    R (>= 3.4.0)
+Imports:
+    MASS,
+    methods,
+    rlang (>= 0.3.1)
+Suggests:
+    testthat,
+    knitr,
+    rmarkdown
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.1.2
+SystemRequirements: GNU make
+Biarch: true
+VignetteBuilder: knitr
