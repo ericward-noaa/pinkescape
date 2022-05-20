@@ -4,13 +4,15 @@ Title: Simulate Pink Salmon Escapement
 Version: 0.0.1
 Authors@R: as.person(c("Eric Ward <eric.ward@noaa.gov> [aut, cre]"))
 Maintainer: Eric Ward <eric.ward@noaa.gov>
-Description: The package simulates pink salmon escapement across multiple regimes
+Description: The package simulates salmon escapement across multiple regimes and calculates net economic benefits of harvest.
 License: GPL (>=3)
 Depends:
     R (>= 3.4.0)
 Imports:
     MASS,
     methods,
+    dplyr,
+    ggplot2,
     rlang (>= 0.3.1)
 Suggests:
     testthat,

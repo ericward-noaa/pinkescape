@@ -7,6 +7,7 @@
 sim(
   sims = 1000,
   time_steps = 100,
+  ricker_pars = NULL,
   pr_12 = 0.1,
   pr_21 = 0.1,
   run = "odd",
@@ -14,6 +15,7 @@ sim(
   rec_std = 0.1,
   rec_acf = 0.7,
   escapement_rule = "both",
+  harvest_CV = 0,
   discount_rate = 0.1,
   seed = 123
 )
@@ -22,6 +24,8 @@ sim(
 \item{sims}{The number of simulations, defaults to 1000}
 
 \item{time_steps}{The number of time steps, defaults to 100}
+
+\item{ricker_pars}{a dataframe of custom parameters for the Ricker model}
 
 \item{pr_12}{The probability of transitioning from state 1 to 2, defaults to 0.1}
 
@@ -37,6 +41,8 @@ sim(
 
 \item{escapement_rule}{Can be "pre", "post", or "both" (default). If "pre" or "post", a single
 escapement rule is used}
+
+\item{harvest_CV}{The coefficient of variation for harvest. Variability is lognormal -- and this parameter controls the amount of variation.}
 
 \item{discount_rate}{Optional, can also be done after the fact, but defaults to 0.1}
 

@@ -1,6 +1,7 @@
 #' fit_bycatch is the primary function for fitting bycatch models to time series of takes and effort
 #' @param sims The number of simulations, defaults to 1000
 #' @param time_steps The number of time steps, defaults to 100
+#' @param ricker_pars a dataframe of custom parameters for the Ricker model
 #' @param pr_12 The probability of transitioning from state 1 to 2, defaults to 0.1
 #' @param pr_21 The probability of transitioning from state 1 to 2, defaults to 0.1
 #' @param run Whether to run this for the odd or even broodline, defaults to "odd"
@@ -9,16 +10,19 @@
 #' @param rec_acf Temporal autocorrelation of recruitment. Values of 1 = random walk, values of 0 = white noise. Defaults to 0.7
 #' @param escapement_rule Can be "pre", "post", or "both" (default). If "pre" or "post", a single
 #' escapement rule is used
+#' @param harvest_CV The coefficient of variation for harvest. Variability is lognormal -- and this parameter controls the amount of variation.
 #' @param discount_rate Optional, can also be done after the fact, but defaults to 0.1
 #' @param seed Seed for random number generation, defaults to 123
 #' @return data frame of simulations
 #'
+#' @importFrom stats rnorm
 #' @export
 #'
 # bring up with group on next call: order of harvest v recruitment
 # add variabiltiy by regime?
 sim <- function(sims = 1000, # number of simulations
                 time_steps = 100,
+                ricker_pars = NULL,
                 pr_12 = 0.1,# probability transitioning 1:2
                 pr_21 = 0.1,# probability transitioning 2:1
                 run = "odd",
@@ -26,22 +30,17 @@ sim <- function(sims = 1000, # number of simulations
                 rec_std = 0.1, # recruitment standard deviation in log space
                 rec_acf = 0.7, # recruitment autocorrelation in time
                 escapement_rule = "both",
+                harvest_CV = 0,
                 discount_rate = 0.1,
                 seed = 123
 ) {
 
-  ricker_pars <- data.frame("regime" = c("pre","post","pre","post"),
-                            "regime_id" = c(1,2,1,2),
-                            "run" = c("odd","odd","even","even"),
-                            "a" = c(1.89763548,1.28512935,0.95639419,2.83733629),
-                            "b" = c(-0.16520772,-0.04008856,-0.0937247,-0.47663675),
-                            "S0" = c(3.962855, 3.962855, 3.675333,3.675333), # escapement in 2018-19
-                            "S_star"=c(6.14274,14.8476,6.17917,2.59796), # escapement rule
-                            "real_price" = c(2099586.443,2099586.443,2132653.372,2132653.372),
-                            "cst_param_calib"=c(2132653.372,2132653.372,9435607.205,9435607.205))
+  if(is.null(ricker_pars)) {
+    ricker_pars <- get_ricker()
 
+  }
   if(deterministic_model == FALSE) {
-    ricker_pars$S_star = c(6.59548, 12.9706, 5.63686, 2.74081)
+    ricker_pars$S_star = ricker_pars$S_star_deterministic
   }
   ricker_pars = ricker_pars[which(ricker_pars$run == run),]
 
@@ -78,8 +77,13 @@ sim <- function(sims = 1000, # number of simulations
       rec[t] <- spawners[t] * exp(ricker_pars$a[x[t]] + spawners[t]*ricker_pars$b[x[t]]) * exp(rec_dev[t] - 0.5*rec_std^2)
       harvest[t] <- max(rec[t] - ricker_pars$S_star[x[t]], 0)
 
+      # harvest variability
+      if(harvest_CV > 0) harvest[t] <- harvest[t] * exp(rnorm(1,mean=0,sd=harvest_CV) - harvest_CV*harvest_CV/2.0)
+
       net_benefits[t] <- rec[t]*ricker_pars$real_price[x[t]] - ricker_pars$cst_param_calib[x[t]] * log(rec[t]) -
         (spawners[t]*ricker_pars$real_price[x[t]] - ricker_pars$cst_param_calib[x[t]] * log(spawners[t]))
+
+      if(harvest[t]==0) net_benefits[t] <- 0 # per DF 5/20/22
       # add discount factor?
       # add discount factor * net_ben
     }

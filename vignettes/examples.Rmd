@@ -1,0 +1,104 @@
+---
+title: "Simulation examples"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Simulation examples}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE, cache=FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 7,
+  fig.asp = 0.618
+)
+```
+
+```{r packages, message=FALSE, warning=TRUE}
+library(ggplot2)
+library(dplyr)
+library(pinkescape)
+```
+
+## Comparing variability of recruitment on net benefits
+
+We will simulate a low and high variance scenario, calculate net benefits for each simulation and plot results. 
+```{r}
+df_lo = sim(rec_std = 0.05)
+df_hi = sim(rec_std = 0.2)
+
+# summarize total benefits
+df_lo_summary = mutate(df_lo,
+                              net_ben = discount*net_benefits) %>%
+  group_by(sim) %>%
+  summarise(tot_ben = sum(net_ben))
+
+df_hi_summary = mutate(df_hi,
+                              net_ben = discount*net_benefits) %>%
+  group_by(sim) %>%
+  summarise(tot_ben = sum(net_ben))
+
+df_lo_summary$sd = 0.05
+df_hi_summary$sd = 0.2
+ggplot(rbind(df_lo_summary,df_hi_summary), aes(sd, tot_ben,group=sd)) +
+  geom_boxplot()
+
+```
+
+## Comparing effect of recruitment autocorrelation on net benefits
+
+Similar to above, we can compare a white noise to autocorrelated scenario,  
+
+```{r}
+df_lo = sim(rec_acf = 0)
+df_hi = sim(rec_acf = 0.7)
+# summarize
+df_lo_summary = mutate(df_lo,
+                              net_ben = discount*net_benefits) %>%
+  group_by(sim) %>%
+  summarise(tot_ben = sum(net_ben))
+df_hi_summary = mutate(df_hi,
+                              net_ben = discount*net_benefits) %>%
+  group_by(sim) %>%
+  summarise(tot_ben = sum(net_ben))
+df_lo_summary$acf = 0
+df_hi_summary$acf = 0.7
+ggplot(rbind(df_lo_summary,df_hi_summary), aes(acf, tot_ben,group=acf)) +
+  geom_boxplot()
+
+```
+
+## Adding harvest variability 
+
+We can introduce variability in realized harvest by specifying the `harvest_CV` parameter, which is a lognormal variable multiplied by expected harvest. Realistic values are probably in the 0.5 - 1.0 range.
+
+```{r eval=FALSE}
+sim(harvest_CV = 0.5)
+```
+
+
+## Using custom Ricker parameters
+
+Instead of the defaults, we can create a dataframe with custom parameters and pass these in. The default parameters can be found using the `get_ricker()` function,  
+
+```{r}
+pars <- get_ricker()
+```
+
+But let's change the Ricker $a$ and $b$ parameters. We have a custom 
+
+```{r}
+pars$a = c(1,1,2,2)
+pars$b = runif(4)
+```
+
+These can be passed into the simulation now
+
+```{r}
+custom_sims <- sim(ricker_pars = pars)
+```
+
+
