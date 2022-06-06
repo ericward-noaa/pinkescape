@@ -87,8 +87,8 @@ sim <- function(sims = 1000, # number of simulations
 
       # add optional time lag, defaults to 0
       net_benefits[t] <- 0
-      if(t > time_lag) net_benefits[t] <- rec[t]*ricker_pars$real_price[x[t - time_lag]] - ricker_pars$cst_param_calib[x[t - time_lag]] * log(rec[t]) -
-        (spawners[t]*ricker_pars$real_price[x[t - time_lag]] - ricker_pars$cst_param_calib[x[t - time_lag]] * log(spawners[t]))
+      net_benefits[t] <- rec[t]*ricker_pars$real_price[x[t]] - ricker_pars$cst_param_calib[x[t]] * log(rec[t]) -
+        (spawners[t]*ricker_pars$real_price[x[t]] - ricker_pars$cst_param_calib[x[t]] * log(spawners[t]))
 
       if(harvest[t]==0) net_benefits[t] <- 0 # per DF 5/20/22
       # add discount factor?
