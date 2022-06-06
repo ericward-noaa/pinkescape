@@ -12,6 +12,8 @@
 #' escapement rule is used
 #' @param harvest_CV The coefficient of variation for harvest. Variability is lognormal -- and this parameter controls the amount of variation.
 #' @param discount_rate Optional, can also be done after the fact, but defaults to 0.1
+#' @param time_lag Optional, represents a delay in how fast response is to the actual regime. Defaults to
+#' 0 but could be a positive integer (e.g. 10) to represent delays in the decision making process
 #' @param seed Seed for random number generation, defaults to 123
 #' @return data frame of simulations
 #'
@@ -32,6 +34,7 @@ sim <- function(sims = 1000, # number of simulations
                 escapement_rule = "both",
                 harvest_CV = 0,
                 discount_rate = 0.1,
+                time_lag = 0,
                 seed = 123
 ) {
 
@@ -72,16 +75,20 @@ sim <- function(sims = 1000, # number of simulations
 
     for(t in 2:time_steps) {
       x[t] = sample(1:2, size=1, prob = m[x[t-1],]) # simulate regime
-      spawners[t] <- rec[t-1] - harvest[t-1] # talk to Dave about this!
+      spawners[t] <- rec[t-1] - harvest[t-1]
 
       rec[t] <- spawners[t] * exp(ricker_pars$a[x[t]] + spawners[t]*ricker_pars$b[x[t]]) * exp(rec_dev[t] - 0.5*rec_std^2)
-      harvest[t] <- max(rec[t] - ricker_pars$S_star[x[t]], 0)
+      # add optional time lag, defaults to 0
+      harvest[t] <- 0
+      if(t > time_lag) harvest[t] <- max(rec[t] - ricker_pars$S_star[x[t - time_lag]], 0)
 
-      # harvest variability
+      # add in harvest variability
       if(harvest_CV > 0) harvest[t] <- harvest[t] * exp(rnorm(1,mean=0,sd=harvest_CV) - harvest_CV*harvest_CV/2.0)
 
-      net_benefits[t] <- rec[t]*ricker_pars$real_price[x[t]] - ricker_pars$cst_param_calib[x[t]] * log(rec[t]) -
-        (spawners[t]*ricker_pars$real_price[x[t]] - ricker_pars$cst_param_calib[x[t]] * log(spawners[t]))
+      # add optional time lag, defaults to 0
+      net_benefits[t] <- 0
+      if(t > time_lag) net_benefits[t] <- rec[t]*ricker_pars$real_price[x[t - time_lag]] - ricker_pars$cst_param_calib[x[t - time_lag]] * log(rec[t]) -
+        (spawners[t]*ricker_pars$real_price[x[t - time_lag]] - ricker_pars$cst_param_calib[x[t - time_lag]] * log(spawners[t]))
 
       if(harvest[t]==0) net_benefits[t] <- 0 # per DF 5/20/22
       # add discount factor?
