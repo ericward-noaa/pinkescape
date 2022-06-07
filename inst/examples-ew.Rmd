@@ -1,0 +1,200 @@
+---
+title: "Simulation examples"
+date: "`r Sys.Date()`"
+output:
+  rmarkdown::html_vignette: default
+vignette: |
+  %\VignetteIndexEntry{Simulation examples} %\VignetteEngine{knitr::rmarkdown} %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE, cache=FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 7,
+  fig.asp = 0.618
+)
+```
+
+```{r packages, message=FALSE, warning=TRUE}
+library(ggplot2)
+library(dplyr)
+library(pinkescape)
+library(kableExtra)
+```
+
+## Using custom Ricker parameters
+
+Instead of the defaults, we can create a dataframe with custom parameters and pass these in. The default parameters can be found using the `get_ricker()` function,  
+
+```{r}
+pars <- get_ricker()
+```
+
+But let's change the Ricker $a$ and $b$ parameters. We have a custom 
+
+```{r}
+pars$a = c(2.14622314, 1.09373485, 1.20498185, 2.64594179)
+pars$b = c(-0.16520772,-0.04008856,-0.09372470,-0.47663675)
+pars$S_star=c(6.12339,13.4478,6.88375,2.74133)
+pars$real_price = c(2099586.443,2099586.443,2132653.372,2132653.372)
+pars$cst_param_calib=c(13140389.91,13140389.91,9435607.205,9435607.205)
+pars$S_star_deterministic = c(6.38142, 10.9406, 6.78888, 3.02635)
+```
+
+Create a data frame for passing arguments to simulations.  
+
+```{r}
+runs_det = expand.grid(run = c("odd","even"),
+                   escapement_rule = c("both","pre","post"),
+                   rec_std = c(0.02, 0.2),
+                   time_lag = c(0,10),
+                   deterministic_model = TRUE)
+runs_det$name = "SW"
+runs_det$name[which(runs_det$escapement_rule=="pre")] = "PR"
+runs_det$name[which(runs_det$escapement_rule=="post")] = "PS"
+
+runs_stoch = expand.grid(run = c("odd","even"),
+                   escapement_rule = c("both","pre","post"),
+                   rec_std = c(0.02, 0.2),
+                   time_lag = c(0,10),
+                   deterministic_model = FALSE)
+runs_stoch$name = "ST-SW"
+runs_stoch$name[which(runs_stoch$escapement_rule=="pre")] = "ST-PR"
+runs_stoch$name[which(runs_stoch$escapement_rule=="post")] = "ST-PS"
+
+runs = rbind(runs_det, runs_stoch)
+```
+
+Loop through and bind the simulations together
+
+```{r}
+for(i in 1:nrow(runs)) {
+  s = sim(rec_std = runs$rec_std[i],
+          ricker_pars = pars,
+          pr_12 = 0.118,
+          pr_21 = 0.202,
+          run=runs$run[i], 
+          time_lag = runs$time_lag[i], 
+          escapement_rule = runs$escapement_rule[i])
+  # add extra info
+  s$id = i # just the row in the runs dataframe
+  s$rec_std = runs$rec_std[i]
+  s$run = runs$run[i]
+  s$escapement_rule = runs$escapement_rule[i]
+  s$name = runs$name[i]
+  s$time_lag = runs$time_lag[i]
+  # save output to single dataframe
+  if(i == 1) {
+    output = s
+  } else {
+    output = rbind(output, s)
+  }
+}
+```
+
+For MSY simulations, we can do something similar and just change S_star 
+```{r}
+pars$S_star=c(6.05299, 24.9448,10.6695, 2.09803)
+```
+
+```{r}
+runs_msy = runs_det
+runs_msy$name = paste0("MSY-",runs_msy$name)
+  
+for(i in 1:nrow(runs_msy)) {
+  s = sim(rec_std = runs_msy$rec_std[i],
+          ricker_pars = pars,
+          pr_12 = 0.118,
+          pr_21 = 0.202,
+          run=runs_msy$run[i], 
+          time_lag = 10, 
+          escapement_rule = runs_msy$escapement_rule[i])
+  # add extra info
+  s$id = i + nrow(runs)# just the row in the runs dataframe
+  s$rec_std = runs_msy$rec_std[i]
+  s$run = runs_msy$run[i]
+  s$escapement_rule = runs_msy$escapement_rule[i]
+  s$name = runs_msy$name[i]
+  s$time_lag = runs_msy$time_lag[i]
+  # save output to single dataframe
+  if(i == 1) {
+    output_msy = s
+  } else {
+    output_msy = rbind(output_msy, s)
+  }
+}
+```
+
+Bind output together
+
+```{r}
+output = rbind(output, output_msy)
+output$rec_std = as.factor(output$rec_std)
+output$name = as.factor(output$name)
+```
+
+Summarize 
+
+```{r}
+out = dplyr::group_by(output, id) %>%
+  dplyr::summarise(total_ben = sum(net_benefits/1.0e6),
+                   ben_mean = mean(net_benefits/1.0e6,0.975),
+                   ben_hi = quantile(net_benefits/1.0e6,0.975),
+                   ben_lo = quantile(net_benefits/1.0e6,0.025),
+                   spawn_mean=mean(spawners),
+                   spawn_hi = quantile(spawners,0.975),
+                   spawn_lo = quantile(spawners,0.025),
+                   rec_mean=mean(rec),
+                   rec_hi = quantile(rec,0.975),
+                   rec_lo = quantile(rec,0.025),
+                   harv_mean=mean(harvest),
+                   harv_hi = quantile(harvest,0.975),
+                   harv_lo = quantile(harvest,0.025),
+                   spawn_sd = sd(spawners),
+                   harv_sd = sd(harvest),
+                   rec_std = rec_std[1],
+                   run = run[1],
+                   escapement_rule = escapement_rule[1],
+                   name = name[1],
+                   time_lag = time_lag[1])
+out$Level = paste0("Rec_sigma: ", out$rec_std,", Lag: ", out$time_lag)
+```
+
+### Plots
+
+```{r}
+p1 = ggplot(out, aes(name,ben_mean,fill=Level,col=Level)) + 
+  geom_point(position = position_dodge2(0.4)) + 
+  geom_linerange(aes(ymin = ben_lo, ymax = ben_hi),
+                 position = position_dodge2(0.4)) + 
+  xlab("") + ylab("Net Benefits (Million $)") + 
+  facet_wrap(~run, scale="free",ncol = 1) +
+  theme_bw()
+p1
+ggsave(p1, file="net_benefits.jpeg", height=5, width=7)
+```
+
+```{r}
+p2 = ggplot(out, aes(name,rec_mean,fill=Level,col=Level)) + 
+  geom_point(position = position_dodge2(0.4)) + 
+  geom_linerange(aes(ymin = rec_lo, ymax = rec_hi),
+                 position = position_dodge2(0.4)) + 
+  xlab("") + ylab("Recruitment") + 
+  facet_wrap(~run, scale="free",ncol = 1) +
+  theme_bw()
+p2
+ggsave(p2, file="recruitment.jpeg", height=5, width=7)
+```
+
+```{r}
+p3 = ggplot(out, aes(name,harv_mean,fill=Level,col=Level)) + 
+  geom_point(position = position_dodge2(0.4)) + 
+  geom_linerange(aes(ymin = harv_lo, ymax = harv_hi),
+                 position = position_dodge2(0.4)) + 
+  xlab("") + ylab("Harvest") + 
+  facet_wrap(~run, scale="free",ncol = 1) +
+  theme_bw()
+p3
+ggsave(p3, file="harvest.jpeg", height=5, width=7)
+```
