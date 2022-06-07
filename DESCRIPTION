@@ -2,7 +2,13 @@ Package: pinkescape
 Type: Package
 Title: Simulate Pink Salmon Escapement
 Version: 0.0.1
-Authors@R: as.person(c("Eric Ward <eric.ward@noaa.gov> [aut, cre]"))
+Authors@R: c(
+    person(c("Eric", "J."), "Ward", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0002-4359-0296")),
+           person(c("Jan", ""), "Ohlberger", role = c("ctb")),
+           person(c("Dave", ""), "Finnoff", role = c("ctb")),
+           person(c("Kevin", "C."), "Barry", role = c("ctb")),
+           person(c("Tobias", ""), "Schwoerer", role = c("ctb")))
 Maintainer: Eric Ward <eric.ward@noaa.gov>
 Description: The package simulates salmon escapement across multiple regimes and calculates net economic benefits of harvest.
 License: GPL (>=3)
