@@ -7,7 +7,7 @@ Authors@R: c(
            comment = c(ORCID = "0000-0002-4359-0296")),
            person(c("Jan", ""), "Ohlberger", role = c("ctb")),
            person(c("Dave", ""), "Finnoff", role = c("ctb")),
-           person(c("Kevin", "C."), "Barry", role = c("ctb")),
+           person(c("Kevin", "C."), "Berry", role = c("ctb")),
            person(c("Tobias", ""), "Schwoerer", role = c("ctb")))
 Maintainer: Eric Ward <eric.ward@noaa.gov>
 Description: The package simulates salmon escapement across multiple regimes and calculates net economic benefits of harvest.
