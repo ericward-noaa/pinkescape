@@ -48,6 +48,31 @@ ggplot(rbind(df_lo_summary,df_hi_summary), aes(sd, tot_ben,group=sd)) +
 
 ```
 
+### Calculating means
+
+Each simulation in a particular run uses the same set of random number seeds to model environmental variation, etc. We can control for this random variability by comparing the pairwise simulations (e.g. simulation # 1 from the low recruitment run to simulation # 1 from the high recruitment run) and calculate the distribution of differences across simulations. 
+
+Using the example above, `df_lo_summary` and `df_hi_summary` contain the total benefits for each simulation. 
+
+```{r}
+df_diff <- data.frame(y = df_hi_summary$tot_ben - df_lo_summary$tot_ben)
+
+ggplot(df_diff, aes(y)) + 
+  geom_histogram()
+```
+
+```{r}
+m <- dplyr::summarise(df_diff, 
+                      mean = mean(y),
+                      median = median(y),
+                      lo25 = quantile(y, 0.25),
+                      hi25 = quantile(y, 0.75),
+                      lo_95 = quantile(y, 0.025),
+                      hi_95 = quantile(y, 0.975))
+knitr::kable(m, caption = "Summary statistics on differences")
+```
+
+
 ## Comparing effect of recruitment autocorrelation on net benefits
 
 Similar to above, we can compare a white noise to autocorrelated scenario,  
