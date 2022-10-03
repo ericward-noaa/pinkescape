@@ -17,6 +17,7 @@ sim(
   escapement_rule = "both",
   harvest_CV = 0,
   discount_rate = 0.1,
+  linear_price_change = 0,
   time_lag = 0,
   seed = 123
 )
@@ -46,6 +47,9 @@ escapement rule is used}
 \item{harvest_CV}{The coefficient of variation for harvest. Variability is lognormal -- and this parameter controls the amount of variation.}
 
 \item{discount_rate}{Optional, can also be done after the fact, but defaults to 0.1}
+
+\item{linear_price_change}{The linear price change over the entire time series, e.g. a value of -0.1 means the prices declines by 10\%
+over \code{time_steps}}
 
 \item{time_lag}{Optional, represents a delay in how fast response is to the actual regime. Defaults to
 0 but could be a positive integer (e.g. 10) to represent delays in the decision making process}

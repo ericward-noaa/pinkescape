@@ -14,6 +14,8 @@
 #' @param discount_rate Optional, can also be done after the fact, but defaults to 0.1
 #' @param time_lag Optional, represents a delay in how fast response is to the actual regime. Defaults to
 #' 0 but could be a positive integer (e.g. 10) to represent delays in the decision making process
+#' @param linear_price_change The linear price change over the entire time series, e.g. a value of -0.1 means the prices declines by 10%
+#' over `time_steps`
 #' @param seed Seed for random number generation, defaults to 123
 #' @return data frame of simulations
 #'
@@ -34,6 +36,7 @@ sim <- function(sims = 1000, # number of simulations
                 escapement_rule = "both",
                 harvest_CV = 0,
                 discount_rate = 0.1,
+                linear_price_change = 0,
                 time_lag = 0,
                 seed = 123
 ) {
@@ -73,6 +76,13 @@ sim <- function(sims = 1000, # number of simulations
     harvest = max(rec - ricker_pars$S_star[x[1]], 0)
     net_benefits = 0 # needs to be update
 
+    # price change
+    prices <- matrix(0, time_steps, 2)
+    price1 <- ricker_pars$real_price[1]
+    price2 <- ricker_pars$real_price[2]
+    prices[,1] <- seq(price1, price1*(1+linear_price_change), length.out = time_steps)
+    prices[,2] <- seq(price2, price2*(1+linear_price_change), length.out = time_steps)
+
     for(t in 2:time_steps) {
       x[t] = sample(1:2, size=1, prob = m[x[t-1],]) # simulate regime
       spawners[t] <- rec[t-1] - harvest[t-1]
@@ -87,8 +97,8 @@ sim <- function(sims = 1000, # number of simulations
 
       # add optional time lag, defaults to 0
       net_benefits[t] <- 0
-      net_benefits[t] <- rec[t]*ricker_pars$real_price[x[t]] - ricker_pars$cst_param_calib[x[t]] * log(rec[t]) -
-        (spawners[t]*ricker_pars$real_price[x[t]] - ricker_pars$cst_param_calib[x[t]] * log(spawners[t]))
+      net_benefits[t] <- rec[t]*prices[t, x[t]] - ricker_pars$cst_param_calib[x[t]] * log(rec[t]) -
+        (spawners[t]*prices[t, x[t]] - ricker_pars$cst_param_calib[x[t]] * log(spawners[t]))
       # escapement rules take prices into account. what if prices are lower than expected?
       # ties to marina's work: smaller fish. instead of changing escapement rule, change price
       # add in 5% and 20% declines in prices
