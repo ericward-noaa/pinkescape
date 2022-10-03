@@ -1,4 +1,4 @@
-#' fit_bycatch is the primary function for fitting bycatch models to time series of takes and effort
+#' sim is the primary function for simulating management strategies to a regime switching model
 #' @param sims The number of simulations, defaults to 1000
 #' @param time_steps The number of time steps, defaults to 100
 #' @param ricker_pars a dataframe of custom parameters for the Ricker model
@@ -89,6 +89,9 @@ sim <- function(sims = 1000, # number of simulations
       net_benefits[t] <- 0
       net_benefits[t] <- rec[t]*ricker_pars$real_price[x[t]] - ricker_pars$cst_param_calib[x[t]] * log(rec[t]) -
         (spawners[t]*ricker_pars$real_price[x[t]] - ricker_pars$cst_param_calib[x[t]] * log(spawners[t]))
+      # escapement rules take prices into account. what if prices are lower than expected?
+      # ties to marina's work: smaller fish. instead of changing escapement rule, change price
+      # add in 5% and 20% declines in prices
 
       if(harvest[t]==0) net_benefits[t] <- 0 # per DF 5/20/22
       # add discount factor?

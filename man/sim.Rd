@@ -2,7 +2,7 @@
 % Please edit documentation in R/sim.R
 \name{sim}
 \alias{sim}
-\title{fit_bycatch is the primary function for fitting bycatch models to time series of takes and effort}
+\title{sim is the primary function for simulating management strategies to a regime switching model}
 \usage{
 sim(
   sims = 1000,
@@ -56,5 +56,5 @@ escapement rule is used}
 data frame of simulations
 }
 \description{
-fit_bycatch is the primary function for fitting bycatch models to time series of takes and effort
+sim is the primary function for simulating management strategies to a regime switching model
 }
