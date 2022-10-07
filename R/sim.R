@@ -150,34 +150,38 @@ sim <- function(sims = 1000, # number of simulations
           #p = prices[1, x[1]]
           #a = ricker_pars$a[x[1]]
           #b = ricker_pars$b[x[1]]
-          func = function(S) {
-            numer <- prices[t] - ricker_pars$cst_param_calib[x[t - time_lag]]/(S*exp(ricker_pars$a[x[t - time_lag]] + ricker_pars$b[x[t - time_lag]]*S))
-            denom <- prices[t] - ricker_pars$cst_param_calib[x[t - time_lag]]/S
-            tot <- (numer/denom) * (1 + ricker_pars$b[x[t - time_lag]]*S) * exp(ricker_pars$a[x[t - time_lag]] + ricker_pars$b[x[t - time_lag]]*S)
-            obj <- (tot - (1+discount_rate))^2
-            return(obj)
+          if(t > time_lag) {
+            func = function(S) {
+              numer <- prices[t] - ricker_pars$cst_param_calib[x[t - time_lag]]/(S*exp(ricker_pars$a[x[t - time_lag]] + ricker_pars$b[x[t - time_lag]]*S))
+              denom <- prices[t] - ricker_pars$cst_param_calib[x[t - time_lag]]/S
+              tot <- (numer/denom) * (1 + ricker_pars$b[x[t - time_lag]]*S) * exp(ricker_pars$a[x[t - time_lag]] + ricker_pars$b[x[t - time_lag]]*S)
+              obj <- (tot - (1+discount_rate))^2
+              return(obj)
+            }
+            o <- optimize(func, lower = 0.001, upper = 20, maximum = FALSE)
           }
-          o <- optimize(func, lower = 0.001, upper = 20, maximum = FALSE)
           harvest[t] = 0
           if(t > time_lag) harvest[t] = max(rec[t] - o$minimum, 0) # use numerical solution
         } else {
-          func = function(S) {
-            bS[1] <- ricker_pars$b[1]*S
-            bS[2] <- ricker_pars$b[2]*S
-            eab[1] <- exp(ricker_pars$a[1] + bS[1])
-            eab[2] <- exp(ricker_pars$a[2] + bS[2])
-            c = ricker_pars$cst_param_calib[x[1]] # not time or state varying
-            p = prices[t] # time but not state varying
-            tot[1] <- (pr_12 * (p - c / (S * eab[2])) * (1 + bS[2]) * eab[2] + (1 - pr_12) * (p - c / (S * eab[1])) * (1 + bS[1]) * eab[1]) / (p - c/S)
-            tot[2] <- (pr_21 * (p - c / (S * eab[1])) * (1 + bS[1]) * eab[1] + (1 - pr_21) * (p - c / (S * eab[2])) * (1 + bS[2]) * eab[2]) / (p - c/S)
-            if(x[t] == 1) {
-              obj <- (tot[1] - (1+discount_rate))^2 # in state 1
-            } else {
-              obj <- (tot[2] - (1+discount_rate))^2 # in state 2
+          if(t > time_lag) {
+            func = function(S) {
+              bS[1] <- ricker_pars$b[1]*S
+              bS[2] <- ricker_pars$b[2]*S
+              eab[1] <- exp(ricker_pars$a[1] + bS[1])
+              eab[2] <- exp(ricker_pars$a[2] + bS[2])
+              c = ricker_pars$cst_param_calib[x[1]] # not time or state varying
+              p = prices[t] # time but not state varying
+              tot[1] <- (pr_12 * (p - c / (S * eab[2])) * (1 + bS[2]) * eab[2] + (1 - pr_12) * (p - c / (S * eab[1])) * (1 + bS[1]) * eab[1]) / (p - c/S)
+              tot[2] <- (pr_21 * (p - c / (S * eab[1])) * (1 + bS[1]) * eab[1] + (1 - pr_21) * (p - c / (S * eab[2])) * (1 + bS[2]) * eab[2]) / (p - c/S)
+              if(x[t-time_lag] == 1) {
+                obj <- (tot[1] - (1+discount_rate))^2 # in state 1
+              } else {
+                obj <- (tot[2] - (1+discount_rate))^2 # in state 2
+              }
+              return(obj)
             }
-            return(obj)
+            o <- optimize(func, lower = 0.001, upper = 20, maximum = FALSE)
           }
-          o <- optimize(func, lower = 0.001, upper = 20, maximum = FALSE)
           harvest[t] = 0
           if(t > time_lag) harvest[t] = max(rec[t] - o$minimum, 0) # use numerical solution
         }
