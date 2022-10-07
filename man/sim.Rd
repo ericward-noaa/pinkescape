@@ -17,7 +17,9 @@ sim(
   escapement_rule = "both",
   harvest_CV = 0,
   discount_rate = 0.1,
-  linear_price_change = 0,
+  price_linear_change = 0,
+  price_acf = 0.7,
+  price_cv = 0,
   time_lag = 0,
   seed = 123
 )
@@ -48,8 +50,11 @@ escapement rule is used}
 
 \item{discount_rate}{Optional, can also be done after the fact, but defaults to 0.1}
 
-\item{linear_price_change}{The linear price change over the entire time series, e.g. a value of -0.1 means the prices declines by 10\%
-over \code{time_steps}}
+\item{price_linear_change}{The price change over the entire time series. This is linear in log space to keep prices positive. Defaults to 0}
+
+\item{price_acf}{The autocorrelation of prices. Defaults to 0.7, based on time series of pink salmon prices in Prince William Sound, 1984 - 2021}
+
+\item{price_cv}{The coefficient of variation, or standard deviation in log space of prices. Defaults to 0 (realistic values based on time series of pink salmon prices in Prince William Sound, 1984 - 2021 = 0.1)}
 
 \item{time_lag}{Optional, represents a delay in how fast response is to the actual regime. Defaults to
 0 but could be a positive integer (e.g. 10) to represent delays in the decision making process}

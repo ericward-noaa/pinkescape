@@ -2,4 +2,5 @@
 
 export(get_ricker)
 export(sim)
+importFrom(stats,optimize)
 importFrom(stats,rnorm)

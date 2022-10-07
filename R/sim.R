@@ -14,12 +14,13 @@
 #' @param discount_rate Optional, can also be done after the fact, but defaults to 0.1
 #' @param time_lag Optional, represents a delay in how fast response is to the actual regime. Defaults to
 #' 0 but could be a positive integer (e.g. 10) to represent delays in the decision making process
-#' @param linear_price_change The linear price change over the entire time series, e.g. a value of -0.1 means the prices declines by 10%
-#' over `time_steps`
+#' @param price_linear_change The price change over the entire time series. This is linear in log space to keep prices positive. Defaults to 0
+#' @param price_acf The autocorrelation of prices. Defaults to 0.7, based on time series of pink salmon prices in Prince William Sound, 1984 - 2021
+#' @param price_cv The coefficient of variation, or standard deviation in log space of prices. Defaults to 0 (realistic values based on time series of pink salmon prices in Prince William Sound, 1984 - 2021 = 0.1)
 #' @param seed Seed for random number generation, defaults to 123
 #' @return data frame of simulations
 #'
-#' @importFrom stats rnorm
+#' @importFrom stats rnorm optimize
 #' @export
 #'
 # bring up with group on next call: order of harvest v recruitment
@@ -36,14 +37,14 @@ sim <- function(sims = 1000, # number of simulations
                 escapement_rule = "both",
                 harvest_CV = 0,
                 discount_rate = 0.1,
-                linear_price_change = 0,
+                price_linear_change = 0,
+                price_acf = 0.7, # default based on PWS pink salmon 1984 - 2021
+                price_cv = 0, # default based on PWS pink salmon 1984 - 2021
                 time_lag = 0,
-                seed = 123
-) {
+                seed = 123) {
 
   if(is.null(ricker_pars)) {
     ricker_pars <- get_ricker()
-
   }
   if(deterministic_model == FALSE) {
     ricker_pars$S_star = ricker_pars$S_star_deterministic
@@ -59,6 +60,10 @@ sim <- function(sims = 1000, # number of simulations
   m[1,] = c(1-pr_12, pr_12)
   m[2,] = c(pr_21, 1-pr_21)
 
+  price_feedback = FALSE
+  if(price_linear_change != 0) price_feedback = TRUE
+  if(price_cv != 0) price_feedback = TRUE
+
   # loop over iterations
   for(s in 1:sims) {
 
@@ -69,36 +74,120 @@ sim <- function(sims = 1000, # number of simulations
       rec_dev[t] = rnorm(1, mean = rec_acf * rec_dev[t-1], sd = rec_std)
     }
 
+    # price change
+    price1 <- ricker_pars$real_price[1] # starting price in regime 1
+    prices = log(ricker_pars$real_price[1])
+    price_dev1 = rnorm(1,0,price_cv)
+    for(t in 2:time_steps) {
+      price_dev1[t] = rnorm(1, price_acf*price_dev1[t-1], price_cv) - (price_cv*price_cv)/2 # autocorrelated price shocks
+      prices[t] <- prices[t-1] + price_linear_change + price_dev1[t]
+    }
+    prices = exp(prices)
+
     # initial conditions in year 1, largely built off 2019
     x = sample(1:2,size=1)
     spawners = ricker_pars$S0[x[1]]
     rec = spawners * exp(ricker_pars$a[x[1]] + spawners*ricker_pars$b[x[1]])# recruitment first year, S0 * exp(a + bS0)
-    harvest = max(rec - ricker_pars$S_star[x[1]], 0)
-    net_benefits = 0 # needs to be update
 
-    # price change
-    prices <- matrix(0, time_steps, 2)
-    price1 <- ricker_pars$real_price[1]
-    price2 <- ricker_pars$real_price[2]
-    prices[,1] <- seq(price1, price1*(1+linear_price_change), length.out = time_steps)
-    prices[,2] <- seq(price2, price2*(1+linear_price_change), length.out = time_steps)
+    if(price_feedback == TRUE) {
+      # solve for S_star depending on regime and whether this is deterministic or stochastic
+      if(deterministic_model == TRUE) {
+        #delta = discount_rate
+        #calib = ricker_pars$cst_param_calib[x[1]]
+        #p = prices[1, x[1]]
+        #a = ricker_pars$a[x[1]]
+        #b = ricker_pars$b[x[1]]
+        func = function(S) {
+          bS = ricker_pars$b[x[1]]*S
+          abS = ricker_pars$a[x[1]] + bS
+          numer <- prices[1] - ricker_pars$cst_param_calib[x[1]]/(S*exp(abS))
+          denom <- prices[1] - ricker_pars$cst_param_calib[x[1]]/S
+          tot <- (numer/denom) * (1 + bS) * exp(abS)
+          obj <- (tot - (1+discount_rate))^2
+          return(obj)
+        }
+        o <- optimize(func, lower = 0.001, upper = 20, maximum = FALSE)
+        harvest = max(rec - o$minimum, 0) # use numerical solution
+      } else {
+        func = function(S) {
+          bS[1] <- ricker_pars$b[1]*S
+          bS[2] <- ricker_pars$b[2]*S
+          eab[1] <- exp(ricker_pars$a[1] + bS[1])
+          eab[2] <- exp(ricker_pars$a[2] + bS[2])
+          c = ricker_pars$cst_param_calib[x[1]]
+          p = prices[1]
+          tot[1] <- (pr_12 * (p - c / (S * eab[2])) * (1 + bS[2]) * eab[2] + (1 - pr_12) * (p - c / (S * eab[1])) * (1 + bS[1]) * eab[1]) / (p - c/S)
+          tot[2] <- (pr_21 * (p - c / (S * eab[1])) * (1 + bS[1]) * eab[1] + (1 - pr_21) * (p - c / (S * eab[2])) * (1 + bS[2]) * eab[2]) / (p - c/S)
+          if(x[1] == 1) {
+            obj <- (tot[1] - (1+discount_rate))^2 # in state 1
+          } else {
+            obj <- (tot[2] - (1+discount_rate))^2 # in state 2
+          }
+          return(obj)
+        }
+        o <- optimize(func, lower = 0.001, upper = 20, maximum = FALSE)
+        harvest = max(rec - o$minimum, 0) # use numerical solution
+      }
+    } else {
+      harvest = max(rec - ricker_pars$S_star[x[1]], 0)
+    }
+
+    net_benefits = 0 # needs to be updated
 
     for(t in 2:time_steps) {
       x[t] = sample(1:2, size=1, prob = m[x[t-1],]) # simulate regime
       spawners[t] <- rec[t-1] - harvest[t-1]
 
       rec[t] <- spawners[t] * exp(ricker_pars$a[x[t]] + spawners[t]*ricker_pars$b[x[t]]) * exp(rec_dev[t] - 0.5*rec_std^2)
-      # add optional time lag, defaults to 0
-      harvest[t] <- 0
-      if(t > time_lag) harvest[t] <- max(rec[t] - ricker_pars$S_star[x[t - time_lag]], 0)
+
+      if(price_feedback == TRUE) {
+        # solve for S_star depending on regime and whether this is deterministic or stochastic
+        if(deterministic_model == TRUE) {
+          #delta = discount_rate
+          #calib = ricker_pars$cst_param_calib[x[1]]
+          #p = prices[1, x[1]]
+          #a = ricker_pars$a[x[1]]
+          #b = ricker_pars$b[x[1]]
+          func = function(S) {
+            numer <- prices[t] - ricker_pars$cst_param_calib[x[t - time_lag]]/(S*exp(ricker_pars$a[x[t - time_lag]] + ricker_pars$b[x[t - time_lag]]*S))
+            denom <- prices[t] - ricker_pars$cst_param_calib[x[t - time_lag]]/S
+            tot <- (numer/denom) * (1 + ricker_pars$b[x[t - time_lag]]*S) * exp(ricker_pars$a[x[t - time_lag]] + ricker_pars$b[x[t - time_lag]]*S)
+            obj <- (tot - (1+discount_rate))^2
+            return(obj)
+          }
+          o <- optimize(func, lower = 0.001, upper = 20, maximum = FALSE)
+          harvest[t] = max(rec[t] - o$minimum, 0) # use numerical solution
+        } else {
+          func = function(S) {
+            bS[1] <- ricker_pars$b[1]*S
+            bS[2] <- ricker_pars$b[2]*S
+            eab[1] <- exp(ricker_pars$a[1] + bS[1])
+            eab[2] <- exp(ricker_pars$a[2] + bS[2])
+            c = ricker_pars$cst_param_calib[x[1]] # not time or state varying
+            p = prices[t] # time but not state varying
+            tot[1] <- (pr_12 * (p - c / (S * eab[2])) * (1 + bS[2]) * eab[2] + (1 - pr_12) * (p - c / (S * eab[1])) * (1 + bS[1]) * eab[1]) / (p - c/S)
+            tot[2] <- (pr_21 * (p - c / (S * eab[1])) * (1 + bS[1]) * eab[1] + (1 - pr_21) * (p - c / (S * eab[2])) * (1 + bS[2]) * eab[2]) / (p - c/S)
+            if(x[t] == 1) {
+              obj <- (tot[1] - (1+discount_rate))^2 # in state 1
+            } else {
+              obj <- (tot[2] - (1+discount_rate))^2 # in state 2
+            }
+            return(obj)
+          }
+        }
+      } else {
+        # add optional time lag, defaults to 0
+        harvest[t] <- 0
+        if(t > time_lag) harvest[t] <- max(rec[t] - ricker_pars$S_star[x[t - time_lag]], 0)
+      }
 
       # add in harvest variability
       if(harvest_CV > 0) harvest[t] <- harvest[t] * exp(rnorm(1,mean=0,sd=harvest_CV) - harvest_CV*harvest_CV/2.0)
 
       # add optional time lag, defaults to 0
       net_benefits[t] <- 0
-      net_benefits[t] <- rec[t]*prices[t, x[t]] - ricker_pars$cst_param_calib[x[t]] * log(rec[t]) -
-        (spawners[t]*prices[t, x[t]] - ricker_pars$cst_param_calib[x[t]] * log(spawners[t]))
+      net_benefits[t] <- rec[t]*prices[t] - ricker_pars$cst_param_calib[x[t]] * log(rec[t]) -
+        (spawners[t]*prices[t] - ricker_pars$cst_param_calib[x[t]] * log(spawners[t]))
       # escapement rules take prices into account. what if prices are lower than expected?
       # ties to marina's work: smaller fish. instead of changing escapement rule, change price
       # add in 5% and 20% declines in prices
@@ -119,6 +208,7 @@ sim <- function(sims = 1000, # number of simulations
                     harvest = harvest,
                     net_benefits = net_benefits,
                     sim = s,
+                    price_per_million = prices,
                     discount = discount)
     if(s==1) {
       all_df = df
