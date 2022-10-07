@@ -107,7 +107,8 @@ sim <- function(sims = 1000, # number of simulations
           return(obj)
         }
         o <- optimize(func, lower = 0.001, upper = 20, maximum = FALSE)
-        harvest = max(rec - o$minimum, 0) # use numerical solution
+        harvest = 0
+        if(1 > time_lag) harvest = max(rec - o$minimum, 0) # use numerical solution
       } else {
         func = function(S) {
           bS[1] <- ricker_pars$b[1]*S
@@ -126,7 +127,8 @@ sim <- function(sims = 1000, # number of simulations
           return(obj)
         }
         o <- optimize(func, lower = 0.001, upper = 20, maximum = FALSE)
-        harvest = max(rec - o$minimum, 0) # use numerical solution
+        harvest = 0
+        if(1 > time_lag) harvest = max(rec - o$minimum, 0) # use numerical solution
       }
     } else {
       harvest = max(rec - ricker_pars$S_star[x[1]], 0)
@@ -156,7 +158,8 @@ sim <- function(sims = 1000, # number of simulations
             return(obj)
           }
           o <- optimize(func, lower = 0.001, upper = 20, maximum = FALSE)
-          harvest[t] = max(rec[t] - o$minimum, 0) # use numerical solution
+          harvest[t] = 0
+          if(t > time_lag) harvest[t] = max(rec[t] - o$minimum, 0) # use numerical solution
         } else {
           func = function(S) {
             bS[1] <- ricker_pars$b[1]*S
@@ -174,6 +177,9 @@ sim <- function(sims = 1000, # number of simulations
             }
             return(obj)
           }
+          o <- optimize(func, lower = 0.001, upper = 20, maximum = FALSE)
+          harvest[t] = 0
+          if(t > time_lag) harvest[t] = max(rec[t] - o$minimum, 0) # use numerical solution
         }
       } else {
         # add optional time lag, defaults to 0
