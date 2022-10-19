@@ -144,6 +144,8 @@ sim <- function(sims = 1000, # number of simulations
 
       if(price_feedback == TRUE) {
         # solve for S_star depending on regime and whether this is deterministic or stochastic
+        # if model is constant, and prices are determistic -- might want to build in expected prices
+        # also -- want to include optimization below in loop for robustness check
         if(deterministic_model == TRUE) {
           #delta = discount_rate
           #calib = ricker_pars$cst_param_calib[x[1]]
