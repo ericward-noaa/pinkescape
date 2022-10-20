@@ -1,0 +1,669 @@
+---
+title: "Summary of model output"
+format: pdf
+editor: visual
+---
+
+There are a large number of axes to potentially explore with our simualations; below we'll focus on 
+* recruitment variability
+* management time lag
+* price declines
+For each of these metrics, we can also impose a feedback loop with prices and let the optimal escapement goal be dynamic
+
+## Recruitment variability
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+library(pinkescape)
+library(dplyr)
+library(ggplot2)
+library(viridis)
+library(ggpubr)
+```
+
+```{r sim1, cache=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+
+# loop over different values of recruitment
+rec_sd = c(0.1, 1.0)
+dfs = list()
+for(i in 1:length(rec_sd)) {
+  
+dfs[[i]] = sim(
+  sims = 1000,
+  time_steps = 100,
+  pr_12 = 0.1,
+  pr_21 = 0.1,
+  run = "odd",
+  deterministic_model = TRUE,
+  rec_std = rec_sd[i],
+  rec_acf = 0,
+  escapement_rule = "both",
+  discount_rate = 0.1,
+  seed = 123
+)
+dfs[[i]]$scenario <- paste(rec_sd[i])
+}
+
+# collapse list of dataframes to single data frame
+df <- bind_rows(dfs)
+
+# calculate discounted net benefit
+df$discount_nb <- df$net_benefits*df$discount
+
+# calculate the sum for each simulation / scenario
+summary = dplyr::group_by(df, sim, scenario) %>% 
+  dplyr::mutate(cum_ben = cumsum(discount_nb),
+                cum_harv = cumsum(harvest),
+                cum_rec = cumsum(rec)) %>%
+  dplyr::group_by(t, scenario) %>% 
+  dplyr::summarise(lo25_ben = quantile(cum_ben, 0.25),
+                   hi75_ben = quantile(cum_ben, 0.75),
+                   m_ben = mean(cum_ben),
+                   med_ben = median(cum_ben),
+                   ann_ben_lo25 = quantile(discount_nb, 0.25),
+                   ann_ben_hi75 = quantile(discount_nb, 0.75),
+                   ann_ben_50 = quantile(discount_nb, 0.5),
+                   ann_ben_mean = mean(discount_nb),
+                   lo25_h = quantile(cum_harv, 0.25),
+                   hi75_h = quantile(cum_harv, 0.75),
+                   m_h = mean(cum_harv),
+                   med_h = median(cum_harv),
+                   ann_harvest_lo25 = quantile(harvest, 0.25),
+                   ann_harvest_hi75 = quantile(harvest, 0.75),
+                   ann_harvest_50 = quantile(harvest, 0.5),
+                   ann_harvest_mean = mean(harvest),
+                   lo25_rec = quantile(cum_rec, 0.25),
+                   hi75_rec = quantile(cum_rec, 0.75),
+                   m_rec = mean(cum_rec),
+                   med_rec = median(cum_rec),
+                   ann_rec_lo25 = quantile(rec, 0.25),
+                   ann_rec_hi75 = quantile(rec, 0.75),
+                   ann_rec_50 = quantile(rec, 0.5),
+                   ann_rec_mean = mean(rec)
+                   )
+```
+
+These plots demonstrate that net benefits are more variable with more variable recruitment; average net benefits (solid line) are also higher, however higher recruitment translates into lower median net benefits. The lower recruitment variability scenario also translates into higher cumulative recruitment and harvest.
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, fig.height = 10}
+g1 <- ggplot(summary, aes(t, m_ben, col = scenario, fill = scenario)) + 
+  geom_ribbon(aes(ymin=lo25_ben, ymax=hi75_ben), alpha=0.5, col=NA) + 
+  geom_line(aes(t,m_ben)) + 
+  geom_line(aes(t,med_ben), linetype="dashed") +
+  ylab("Total benefits") + 
+  xlab("Time") + 
+  scale_color_viridis_d(end=0.4) + 
+  scale_fill_viridis_d(end=0.4) + 
+  guides(fill=guide_legend(title="Recruitment sd"),
+         col=guide_legend(title="Recruitment sd")) + 
+  coord_cartesian(xlim=c(0,50))
+
+g2 <- ggplot(summary, aes(t, m_h, col = scenario, fill = scenario)) + 
+  geom_ribbon(aes(ymin=lo25_h, ymax=hi75_h), alpha=0.5, col=NA) + 
+  geom_line(aes(t,m_h)) + 
+  geom_line(aes(t,med_h), linetype="dashed") +
+  ylab("Cumulative harvest") + 
+  xlab("Time") + 
+  scale_color_viridis_d(end=0.4) + 
+  scale_fill_viridis_d(end=0.4) + 
+  guides(fill=guide_legend(title="Recruitment sd"),
+         col=guide_legend(title="Recruitment sd"))
+
+g3 <- ggplot(summary, aes(t, m_rec, col = scenario, fill = scenario)) + 
+  geom_ribbon(aes(ymin=lo25_rec, ymax=hi75_rec), alpha=0.5, col=NA) + 
+  geom_line(aes(t,m_rec)) + 
+  geom_line(aes(t,med_rec), linetype="dashed") +
+  ylab("Cumulative recruitment") + 
+  xlab("Time") + 
+  scale_color_viridis_d(end=0.4) + 
+  scale_fill_viridis_d(end=0.4) + 
+  guides(fill=guide_legend(title="Recruitment sd"),
+         col=guide_legend(title="Recruitment sd"))
+
+g4 <- ggplot(summary, aes(t, ann_ben_mean, col = scenario, fill = scenario)) + 
+  geom_ribbon(aes(ymin=ann_ben_lo25, ymax=ann_ben_hi75), alpha=0.5, col=NA) + 
+  geom_line(aes(t,ann_ben_mean)) + 
+  geom_line(aes(t,ann_ben_50), linetype="dashed") +
+  ylab("Annual net benefits") + 
+  xlab("Time") + 
+  scale_color_viridis_d(end=0.4) + 
+  scale_fill_viridis_d(end=0.4) + 
+  guides(fill=guide_legend(title="Recruitment sd"),
+         col=guide_legend(title="Recruitment sd")) + 
+  coord_cartesian(xlim=c(0,50))
+
+g5 <- ggplot(summary, aes(t, ann_harvest_mean, col = scenario, fill = scenario)) + 
+  geom_ribbon(aes(ymin=ann_harvest_lo25, ymax=ann_harvest_hi75), alpha=0.5, col=NA) + 
+  geom_line(aes(t,ann_harvest_mean)) + 
+  geom_line(aes(t,ann_harvest_50), linetype="dashed") +
+  ylab("Annual harvest") + 
+  xlab("Time") + 
+  scale_color_viridis_d(end=0.4) + 
+  scale_fill_viridis_d(end=0.4) + 
+  guides(fill=guide_legend(title="Recruitment sd"),
+         col=guide_legend(title="Recruitment sd")) + 
+  coord_cartesian(xlim=c(0,50))
+
+g6 <- ggplot(summary, aes(t, ann_rec_mean, col = scenario, fill = scenario)) + 
+  geom_ribbon(aes(ymin=ann_rec_lo25, ymax=ann_rec_hi75), alpha=0.5, col=NA) + 
+  geom_line(aes(t,ann_rec_mean)) + 
+  geom_line(aes(t,ann_rec_50), linetype="dashed") +
+  ylab("Annual recruitment") + 
+  xlab("Time") + 
+  scale_color_viridis_d(end=0.4) + 
+  scale_fill_viridis_d(end=0.4) + 
+  guides(fill=guide_legend(title="Recruitment sd"),
+         col=guide_legend(title="Recruitment sd")) + 
+  coord_cartesian(xlim=c(0,50))
+ggarrange(g1, g2, g3, ncol=1, common.legend = TRUE, legend="top")
+```
+
+We can also relax the assumption about constant prices, and let prices be dynamic (correlated random walks) and impose a feedback onto optimal escapement rules (making the optimal escapement also time varying).
+
+```{r sim1b, cache=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+
+# loop over different values of recruitment
+rec_sd = c(0.1, 1.0)
+dfs = list()
+for(i in 1:length(rec_sd)) {
+  
+dfs[[i]] = sim(
+  sims = 1000,
+  time_steps = 100,
+  pr_12 = 0.1,
+  pr_21 = 0.1,
+  run = "odd",
+  deterministic_model = TRUE,
+  rec_std = rec_sd[i],
+  rec_acf = 0,
+  price_cv = 0.1,
+  escapement_rule = "both",
+  discount_rate = 0.1,
+  seed = 123
+)
+dfs[[i]]$scenario <- paste(rec_sd[i])
+}
+
+# collapse list of dataframes to single data frame
+df <- bind_rows(dfs)
+
+# calculate discounted net benefit
+df$discount_nb <- df$net_benefits*df$discount
+
+# calculate the sum for each simulation / scenario
+summary = dplyr::group_by(df, sim, scenario) %>% 
+  dplyr::mutate(cum_ben = cumsum(discount_nb),
+                cum_harv = cumsum(harvest),
+                cum_rec = cumsum(rec)) %>%
+  dplyr::group_by(t, scenario) %>% 
+  dplyr::summarise(lo25_ben = quantile(cum_ben, 0.25),
+                   hi75_ben = quantile(cum_ben, 0.75),
+                   m_ben = mean(cum_ben),
+                   med_ben = median(cum_ben),
+                   lo25_h = quantile(cum_harv, 0.25),
+                   hi75_h = quantile(cum_harv, 0.75),
+                   m_h = mean(cum_harv),
+                   med_h = median(cum_harv),
+                   lo25_rec = quantile(cum_rec, 0.25),
+                   hi75_rec = quantile(cum_rec, 0.75),
+                   m_rec = mean(cum_rec),
+                   med_rec = median(cum_rec)
+                   )
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, fig.height = 10}
+g1 <- ggplot(summary, aes(t, m_ben, col = scenario, fill = scenario)) + 
+  geom_ribbon(aes(ymin=lo25_ben, ymax=hi75_ben), alpha=0.5, col=NA) + 
+  geom_line(aes(t,m_ben)) + 
+  geom_line(aes(t,med_ben), linetype="dashed") +
+  ylab("Total benefits") + 
+  xlab("Time") + 
+  scale_color_viridis_d(end=0.4) + 
+  scale_fill_viridis_d(end=0.4) + 
+  guides(fill=guide_legend(title="Recruitment sd"),
+         col=guide_legend(title="Recruitment sd")) + 
+  coord_cartesian(xlim=c(0,50))
+
+g2 <- ggplot(summary, aes(t, m_h, col = scenario, fill = scenario)) + 
+  geom_ribbon(aes(ymin=lo25_h, ymax=hi75_h), alpha=0.5, col=NA) + 
+  geom_line(aes(t,m_h)) + 
+  geom_line(aes(t,med_h), linetype="dashed") +
+  ylab("Cumulative harvest") + 
+  xlab("Time") + 
+  scale_color_viridis_d(end=0.4) + 
+  scale_fill_viridis_d(end=0.4) + 
+  guides(fill=guide_legend(title="Recruitment sd"),
+         col=guide_legend(title="Recruitment sd"))
+
+
+g3 <- ggplot(summary, aes(t, m_rec, col = scenario, fill = scenario)) + 
+  geom_ribbon(aes(ymin=lo25_rec, ymax=hi75_rec), alpha=0.5, col=NA) + 
+  geom_line(aes(t,m_rec)) + 
+  geom_line(aes(t,med_rec), linetype="dashed") +
+  ylab("Cumulative recruitment") + 
+  xlab("Time") + 
+  scale_color_viridis_d(end=0.4) + 
+  scale_fill_viridis_d(end=0.4) + 
+  guides(fill=guide_legend(title="Recruitment sd"),
+         col=guide_legend(title="Recruitment sd"))
+
+ggarrange(g1, g2, g3, ncol=1, common.legend = TRUE, legend="top")
+```
+
+\break
+
+## Management response
+
+```{r sim3, cache=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+
+# loop over different values of recruitment
+time_lag = c(0, 10)
+dfs = list()
+for(i in 1:length(time_lag)) {
+  
+dfs[[i]] = sim(
+  sims = 1000,
+  time_steps = 100,
+  pr_12 = 0.1,
+  pr_21 = 0.1,
+  run = "odd",
+  deterministic_model = TRUE,
+  rec_std = 0.1,
+  rec_acf = 0,
+  time_lag = time_lag[i],
+  escapement_rule = "both",
+  discount_rate = 0.1,
+  seed = 123
+)
+dfs[[i]]$scenario <- paste(time_lag[i])
+}
+
+# collapse list of dataframes to single data frame
+df <- bind_rows(dfs)
+
+# calculate discounted net benefit
+df$discount_nb <- df$net_benefits*df$discount
+
+# calculate the sum for each simulation / scenario
+summary = dplyr::group_by(df, sim, scenario) %>% 
+  dplyr::mutate(cum_ben = cumsum(discount_nb),
+                cum_harv = cumsum(harvest),
+                cum_rec = cumsum(rec)) %>%
+  dplyr::group_by(t, scenario) %>% 
+  dplyr::summarise(lo25_ben = quantile(cum_ben, 0.25),
+                   hi75_ben = quantile(cum_ben, 0.75),
+                   m_ben = mean(cum_ben),
+                   med_ben = median(cum_ben),
+                   lo25_h = quantile(cum_harv, 0.25),
+                   hi75_h = quantile(cum_harv, 0.75),
+                   m_h = mean(cum_harv),
+                   med_h = median(cum_harv),
+                   lo25_rec = quantile(cum_rec, 0.25),
+                   hi75_rec = quantile(cum_rec, 0.75),
+                   m_rec = mean(cum_rec),
+                   med_rec = median(cum_rec)
+                   )
+```
+
+These plots demonstrate that a quick management response has a huge impact on total net benefits. The faster response scenario (time lag = 0) also translates into higher cumulative recruitment and harvest.
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, fig.height = 10}
+g1 <- ggplot(summary, aes(t, m_ben, col = scenario, fill = scenario)) + 
+  geom_ribbon(aes(ymin=lo25_ben, ymax=hi75_ben), alpha=0.5, col=NA) + 
+  geom_line(aes(t,m_ben)) + 
+  geom_line(aes(t,med_ben), linetype="dashed") +
+  ylab("Total benefits") + 
+  xlab("Time") + 
+  scale_color_viridis_d(end=0.4) + 
+  scale_fill_viridis_d(end=0.4) + 
+  guides(fill=guide_legend(title="Time lag"),
+         col=guide_legend(title="Time lag")) + 
+  coord_cartesian(xlim=c(0,50))
+
+g2 <- ggplot(summary, aes(t, m_h, col = scenario, fill = scenario)) + 
+  geom_ribbon(aes(ymin=lo25_h, ymax=hi75_h), alpha=0.5, col=NA) + 
+  geom_line(aes(t,m_h)) + 
+  geom_line(aes(t,med_h), linetype="dashed") +
+  ylab("Cumulative harvest") + 
+  xlab("Time") + 
+  scale_color_viridis_d(end=0.4) + 
+  scale_fill_viridis_d(end=0.4) + 
+  guides(fill=guide_legend(title="Time lag"),
+         col=guide_legend(title="Time lag"))
+
+
+g3 <- ggplot(summary, aes(t, m_rec, col = scenario, fill = scenario)) + 
+  geom_ribbon(aes(ymin=lo25_rec, ymax=hi75_rec), alpha=0.5, col=NA) + 
+  #geom_line(aes(t,m_rec)) + 
+  geom_line(aes(t,med_rec), linetype="dashed") +
+  ylab("Cumulative recruitment") + 
+  xlab("Time") + 
+  scale_color_viridis_d(end=0.4) + 
+  scale_fill_viridis_d(end=0.4) + 
+  guides(fill=guide_legend(title="Time lag"),
+         col=guide_legend(title="Time lag"))
+
+ggarrange(g1, g2, g3, ncol=1, common.legend = TRUE, legend="top")
+```
+
+Again we can illustrate the effect with dynamic prices
+
+```{r sim3b, cache=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+
+# loop over different values of recruitment
+time_lag = c(0, 10)
+dfs = list()
+for(i in 1:length(time_lag)) {
+  
+dfs[[i]] = sim(
+  sims = 1000,
+  time_steps = 100,
+  pr_12 = 0.1,
+  pr_21 = 0.1,
+  run = "odd",
+  deterministic_model = TRUE,
+  rec_std = 0.1,
+  rec_acf = 0,
+  price_cv = 0.1,
+  time_lag = time_lag[i],
+  escapement_rule = "both",
+  discount_rate = 0.1,
+  seed = 123
+)
+dfs[[i]]$scenario <- paste(time_lag[i])
+}
+
+# collapse list of dataframes to single data frame
+df <- bind_rows(dfs)
+
+# calculate discounted net benefit
+df$discount_nb <- df$net_benefits*df$discount
+
+# calculate the sum for each simulation / scenario
+summary = dplyr::group_by(df, sim, scenario) %>% 
+  dplyr::mutate(cum_ben = cumsum(discount_nb),
+                cum_harv = cumsum(harvest),
+                cum_rec = cumsum(rec)) %>%
+  dplyr::group_by(t, scenario) %>% 
+  dplyr::summarise(lo25_ben = quantile(cum_ben, 0.25),
+                   hi75_ben = quantile(cum_ben, 0.75),
+                   m_ben = mean(cum_ben),
+                   med_ben = median(cum_ben),
+                   lo25_h = quantile(cum_harv, 0.25),
+                   hi75_h = quantile(cum_harv, 0.75),
+                   m_h = mean(cum_harv),
+                   med_h = median(cum_harv),
+                   lo25_rec = quantile(cum_rec, 0.25),
+                   hi75_rec = quantile(cum_rec, 0.75),
+                   m_rec = mean(cum_rec),
+                   med_rec = median(cum_rec)
+                   )
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, fig.height = 10}
+g1 <- ggplot(summary, aes(t, m_ben, col = scenario, fill = scenario)) + 
+  geom_ribbon(aes(ymin=lo25_ben, ymax=hi75_ben), alpha=0.5, col=NA) + 
+  geom_line(aes(t,m_ben)) + 
+  geom_line(aes(t,med_ben), linetype="dashed") +
+  ylab("Total benefits") + 
+  xlab("Time") + 
+  scale_color_viridis_d(end=0.4) + 
+  scale_fill_viridis_d(end=0.4) + 
+  guides(fill=guide_legend(title="Time lag"),
+         col=guide_legend(title="Time lag")) + 
+  coord_cartesian(xlim=c(0,50))
+
+g2 <- ggplot(summary, aes(t, m_h, col = scenario, fill = scenario)) + 
+  geom_ribbon(aes(ymin=lo25_h, ymax=hi75_h), alpha=0.5, col=NA) + 
+  geom_line(aes(t,m_h)) + 
+  geom_line(aes(t,med_h), linetype="dashed") +
+  ylab("Cumulative harvest") + 
+  xlab("Time") + 
+  scale_color_viridis_d(end=0.4) + 
+  scale_fill_viridis_d(end=0.4) + 
+  guides(fill=guide_legend(title="Time lag"),
+         col=guide_legend(title="Time lag"))
+
+
+g3 <- ggplot(summary, aes(t, m_rec, col = scenario, fill = scenario)) + 
+  geom_ribbon(aes(ymin=lo25_rec, ymax=hi75_rec), alpha=0.5, col=NA) + 
+  #geom_line(aes(t,m_rec)) + 
+  geom_line(aes(t,med_rec), linetype="dashed") +
+  ylab("Cumulative recruitment") + 
+  xlab("Time") + 
+  scale_color_viridis_d(end=0.4) + 
+  scale_fill_viridis_d(end=0.4) + 
+  guides(fill=guide_legend(title="Time lag"),
+         col=guide_legend(title="Time lag"))
+
+ggarrange(g1, g2, g3, ncol=1, common.legend = TRUE, legend="top")
+```
+
+\break
+
+## Price Declines
+
+```{r sim4, cache=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+
+# loop over different values of recruitment
+price_decline = c(-0.05, -0.2)
+dfs = list()
+for(i in 1:length(price_decline)) {
+  
+dfs[[i]] = sim(
+  sims = 1000,
+  time_steps = 100,
+  pr_12 = 0.1,
+  pr_21 = 0.1,
+  run = "odd",
+  deterministic_model = TRUE,
+  rec_std = 0.1,
+  rec_acf = 0,
+  price_linear_change = price_decline[i],
+  escapement_rule = "both",
+  discount_rate = 0.1,
+  seed = 123
+)
+dfs[[i]]$scenario <- paste(price_decline[i])
+}
+
+# collapse list of dataframes to single data frame
+df <- bind_rows(dfs)
+
+# calculate discounted net benefit
+df$discount_nb <- df$net_benefits*df$discount
+
+# calculate the sum for each simulation / scenario
+summary = dplyr::group_by(df, sim, scenario) %>% 
+  dplyr::mutate(cum_ben = cumsum(discount_nb),
+                cum_harv = cumsum(harvest),
+                cum_rec = cumsum(rec)) %>%
+  dplyr::group_by(t, scenario) %>% 
+  dplyr::summarise(lo25_ben = quantile(cum_ben, 0.25),
+                   hi75_ben = quantile(cum_ben, 0.75),
+                   m_ben = mean(cum_ben),
+                   med_ben = median(cum_ben),
+                   lo25_h = quantile(cum_harv, 0.25),
+                   hi75_h = quantile(cum_harv, 0.75),
+                   m_h = mean(cum_harv),
+                   med_h = median(cum_harv),
+                   lo25_rec = quantile(cum_rec, 0.25),
+                   hi75_rec = quantile(cum_rec, 0.75),
+                   m_rec = mean(cum_rec),
+                   med_rec = median(cum_rec)
+                   )
+```
+
+These plots demonstrate that a quick management response has a huge impact on total net benefits. The faster response scenario (time lag = 0) also translates into higher cumulative recruitment and harvest.
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, fig.height = 10}
+g1 <- ggplot(summary, aes(t, m_ben, col = scenario, fill = scenario)) + 
+  geom_ribbon(aes(ymin=lo25_ben, ymax=hi75_ben), alpha=0.5, col=NA) + 
+  geom_line(aes(t,m_ben)) + 
+  geom_line(aes(t,med_ben), linetype="dashed") +
+  ylab("Total benefits") + 
+  xlab("Time") + 
+  scale_color_viridis_d(end=0.4) + 
+  scale_fill_viridis_d(end=0.4) + 
+  guides(fill=guide_legend(title="Price decline"),
+         col=guide_legend(title="Price decline")) + 
+  coord_cartesian(xlim=c(0,50))
+
+g2 <- ggplot(summary, aes(t, m_h, col = scenario, fill = scenario)) + 
+  geom_ribbon(aes(ymin=lo25_h, ymax=hi75_h), alpha=0.5, col=NA) + 
+  geom_line(aes(t,m_h)) + 
+  geom_line(aes(t,med_h), linetype="dashed") +
+  ylab("Cumulative harvest") + 
+  xlab("Time") + 
+  scale_color_viridis_d(end=0.4) + 
+  scale_fill_viridis_d(end=0.4) + 
+  guides(fill=guide_legend(title="Price decline"),
+         col=guide_legend(title="Price decline"))
+
+
+g3 <- ggplot(summary, aes(t, m_rec, col = scenario, fill = scenario)) + 
+  geom_ribbon(aes(ymin=lo25_rec, ymax=hi75_rec), alpha=0.5, col=NA) + 
+  #geom_line(aes(t,m_rec)) + 
+  geom_line(aes(t,med_rec), linetype="dashed") +
+  ylab("Cumulative recruitment") + 
+  xlab("Time") + 
+  scale_color_viridis_d(end=0.4) + 
+  scale_fill_viridis_d(end=0.4) + 
+  guides(fill=guide_legend(title="Price decline"),
+         col=guide_legend(title="Price decline"))
+
+ggarrange(g1, g2, g3, ncol=1, common.legend = TRUE, legend="top")
+```
+
+The above price declines are assumed to be linear (non-stochastic) but we can introduce dynamic prices as we had before.
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, fig.height = 10}
+g1 <- ggplot(summary, aes(t, m_ben, col = scenario, fill = scenario)) + 
+  geom_ribbon(aes(ymin=lo25_ben, ymax=hi75_ben), alpha=0.5, col=NA) + 
+  geom_line(aes(t,m_ben)) + 
+  geom_line(aes(t,med_ben), linetype="dashed") +
+  ylab("Total benefits") + 
+  xlab("Time") + 
+  scale_color_viridis_d(end=0.4) + 
+  scale_fill_viridis_d(end=0.4) + 
+  guides(fill=guide_legend(title="Price decline"),
+         col=guide_legend(title="Price decline")) + 
+  coord_cartesian(xlim=c(0,50))
+
+g2 <- ggplot(summary, aes(t, m_h, col = scenario, fill = scenario)) + 
+  geom_ribbon(aes(ymin=lo25_h, ymax=hi75_h), alpha=0.5, col=NA) + 
+  geom_line(aes(t,m_h)) + 
+  geom_line(aes(t,med_h), linetype="dashed") +
+  ylab("Cumulative harvest") + 
+  xlab("Time") + 
+  scale_color_viridis_d(end=0.4) + 
+  scale_fill_viridis_d(end=0.4) + 
+  guides(fill=guide_legend(title="Price decline"),
+         col=guide_legend(title="Price decline"))
+
+
+g3 <- ggplot(summary, aes(t, m_rec, col = scenario, fill = scenario)) + 
+  geom_ribbon(aes(ymin=lo25_rec, ymax=hi75_rec), alpha=0.5, col=NA) + 
+  #geom_line(aes(t,m_rec)) + 
+  geom_line(aes(t,med_rec), linetype="dashed") +
+  ylab("Cumulative recruitment") + 
+  xlab("Time") + 
+  scale_color_viridis_d(end=0.4) + 
+  scale_fill_viridis_d(end=0.4) + 
+  guides(fill=guide_legend(title="Price decline"),
+         col=guide_legend(title="Price decline"))
+
+ggarrange(g1, g2, g3, ncol=1, common.legend = TRUE, legend="top")
+```
+
+The above price declines are built in as determinsitic trends. We can also include the dynamic price variability, as above using a CV = 0.1.
+
+```{r sim5b, echo=FALSE, warning=FALSE, message=FALSE, cache=TRUE}
+
+# loop over different values of recruitment
+price_decline = c(-0.05, -0.2)
+dfs = list()
+for(i in 1:length(price_decline)) {
+  
+dfs[[i]] = sim(
+  sims = 1000,
+  time_steps = 100,
+  pr_12 = 0.1,
+  pr_21 = 0.1,
+  run = "odd",
+  deterministic_model = TRUE,
+  rec_std = 0.1,
+  rec_acf = 0,
+  price_linear_change = price_decline[i],
+  price_cv = 0.1,
+  escapement_rule = "both",
+  discount_rate = 0.1,
+  seed = 123
+)
+dfs[[i]]$scenario <- paste(price_decline[i])
+}
+
+# collapse list of dataframes to single data frame
+df <- bind_rows(dfs)
+
+# calculate discounted net benefit
+df$discount_nb <- df$net_benefits*df$discount
+
+# calculate the sum for each simulation / scenario
+summary = dplyr::group_by(df, sim, scenario) %>% 
+  dplyr::mutate(cum_ben = cumsum(discount_nb),
+                cum_harv = cumsum(harvest),
+                cum_rec = cumsum(rec)) %>%
+  dplyr::group_by(t, scenario) %>% 
+  dplyr::summarise(lo25_ben = quantile(cum_ben, 0.25),
+                   hi75_ben = quantile(cum_ben, 0.75),
+                   m_ben = mean(cum_ben),
+                   med_ben = median(cum_ben),
+                   lo25_h = quantile(cum_harv, 0.25),
+                   hi75_h = quantile(cum_harv, 0.75),
+                   m_h = mean(cum_harv),
+                   med_h = median(cum_harv),
+                   lo25_rec = quantile(cum_rec, 0.25),
+                   hi75_rec = quantile(cum_rec, 0.75),
+                   m_rec = mean(cum_rec),
+                   med_rec = median(cum_rec)
+                   )
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, fig.height = 10}
+g1 <- ggplot(summary, aes(t, m_ben, col = scenario, fill = scenario)) + 
+  geom_ribbon(aes(ymin=lo25_ben, ymax=hi75_ben), alpha=0.5, col=NA) + 
+  geom_line(aes(t,m_ben)) + 
+  geom_line(aes(t,med_ben), linetype="dashed") +
+  ylab("Total benefits") + 
+  xlab("Time") + 
+  scale_color_viridis_d(end=0.4) + 
+  scale_fill_viridis_d(end=0.4) + 
+  guides(fill=guide_legend(title="Price decline"),
+         col=guide_legend(title="Price decline")) + 
+  coord_cartesian(xlim=c(0,50))
+
+g2 <- ggplot(summary, aes(t, m_h, col = scenario, fill = scenario)) + 
+  geom_ribbon(aes(ymin=lo25_h, ymax=hi75_h), alpha=0.5, col=NA) + 
+  geom_line(aes(t,m_h)) + 
+  geom_line(aes(t,med_h), linetype="dashed") +
+  ylab("Cumulative harvest") + 
+  xlab("Time") + 
+  scale_color_viridis_d(end=0.4) + 
+  scale_fill_viridis_d(end=0.4) + 
+  guides(fill=guide_legend(title="Price decline"),
+         col=guide_legend(title="Price decline"))
+
+
+g3 <- ggplot(summary, aes(t, m_rec, col = scenario, fill = scenario)) + 
+  geom_ribbon(aes(ymin=lo25_rec, ymax=hi75_rec), alpha=0.5, col=NA) + 
+  #geom_line(aes(t,m_rec)) + 
+  geom_line(aes(t,med_rec), linetype="dashed") +
+  ylab("Cumulative recruitment") + 
+  xlab("Time") + 
+  scale_color_viridis_d(end=0.4) + 
+  scale_fill_viridis_d(end=0.4) + 
+  guides(fill=guide_legend(title="Price decline"),
+         col=guide_legend(title="Price decline"))
+
+ggarrange(g1, g2, g3, ncol=1, common.legend = TRUE, legend="top")
+```
