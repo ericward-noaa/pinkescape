@@ -32,7 +32,10 @@
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu"><li>
-      <a href="../articles/examples.html">Simulation examples</a>
+      <a href="../articles/a01_basic_examples.html">Simulation examples</a>
+    </li>
+    <li>
+      <a href="../articles/a02_time_varying_prices.html">Time varying price examples</a>
     </li>
   </ul></li>
       </ul><ul class="nav navbar-nav navbar-right"></ul></div><!--/.nav-collapse -->
@@ -67,7 +70,9 @@
 <span>  escapement_rule <span class="op">=</span> <span class="st">"both"</span>,</span>
 <span>  harvest_CV <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  discount_rate <span class="op">=</span> <span class="fl">0.1</span>,</span>
-<span>  linear_price_change <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  price_linear_change <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  price_acf <span class="op">=</span> <span class="fl">0.7</span>,</span>
+<span>  price_cv <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  time_lag <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  seed <span class="op">=</span> <span class="fl">123</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -124,9 +129,16 @@ escapement rule is used</p></dd>
 <dd><p>Optional, can also be done after the fact, but defaults to 0.1</p></dd>
 
 
-<dt>linear_price_change</dt>
-<dd><p>The linear price change over the entire time series, e.g. a value of -0.1 means the prices declines by 10%
-over <code>time_steps</code></p></dd>
+<dt>price_linear_change</dt>
+<dd><p>The price change over the entire time series. This is linear in log space to keep prices positive. Defaults to 0</p></dd>
+
+
+<dt>price_acf</dt>
+<dd><p>The autocorrelation of prices. Defaults to 0.7, based on time series of pink salmon prices in Prince William Sound, 1984 - 2021</p></dd>
+
+
+<dt>price_cv</dt>
+<dd><p>The coefficient of variation, or standard deviation in log space of prices. Defaults to 0 (realistic values based on time series of pink salmon prices in Prince William Sound, 1984 - 2021 = 0.1)</p></dd>
 
 
 <dt>time_lag</dt>
