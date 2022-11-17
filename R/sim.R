@@ -55,6 +55,9 @@ sim <- function(sims = 1000, # number of simulations
   if(escapement_rule == "pre") ricker_pars$S_star[2] = ricker_pars$S_star[1]
   if(escapement_rule == "post") ricker_pars$S_star[1] = ricker_pars$S_star[2]
 
+  # add extra time steps so first 'time lag' ones can be thrown out
+  if(time_lag > 0) time_steps <- time_steps + time_lag
+
   # transition matrix
   m = matrix(0, 2, 2)
   m[1,] = c(1-pr_12, pr_12)
@@ -228,6 +231,12 @@ sim <- function(sims = 1000, # number of simulations
       all_df = rbind(df,all_df)
     }
 
+  }
+
+  # filter out first 'time lag' ones can be thrown out
+  if(time_lag > 0) {
+    all_df$t <- all_df$t - time_lag
+    all_df = all_df[which(all_df$t > 0),]
   }
 
   # calculate net benefits - millions

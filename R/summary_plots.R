@@ -88,5 +88,5 @@ summarize_plots = function(summary_df) {
     guides(fill=guide_legend(title="Recruitment sd"),
            col=guide_legend(title="Recruitment sd")) +
     coord_cartesian(xlim=c(0,50))
-
+  return(plot_list)
 }
