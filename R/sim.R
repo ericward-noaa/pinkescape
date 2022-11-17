@@ -229,6 +229,9 @@ sim <- function(sims = 1000, # number of simulations
     }
 
   }
+
+  # calculate net benefits - millions
+  all_df$discount_netben <- all_df$net_benefits*all_df$discount/1000000
   return(all_df)
 
 }

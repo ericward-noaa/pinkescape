@@ -30,4 +30,10 @@
   <url>
     <loc>/reference/sim.html</loc>
   </url>
+  <url>
+    <loc>/reference/summarize_plots.html</loc>
+  </url>
+  <url>
+    <loc>/reference/summarize_quantities.html</loc>
+  </url>
 </urlset>

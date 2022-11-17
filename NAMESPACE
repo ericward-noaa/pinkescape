@@ -2,5 +2,11 @@
 
 export(get_ricker)
 export(sim)
+export(summarize_plots)
+export(summarize_quantities)
+import(dplyr)
+import(ggplot2)
+importFrom(stats,median)
 importFrom(stats,optimize)
+importFrom(stats,quantile)
 importFrom(stats,rnorm)

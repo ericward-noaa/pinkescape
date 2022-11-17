@@ -1,7 +1,7 @@
 Package: pinkescape
 Type: Package
 Title: Simulate Pink Salmon Escapement
-Version: 0.0.1
+Version: 0.0.3
 Authors@R: c(
     person(c("Eric", "J."), "Ward", role = c("aut", "cre"), 
       email = "eric.ward@noaa.gov"),
@@ -15,11 +15,8 @@ License: GPL (>=3)
 Depends:
     R (>= 3.4.0)
 Imports:
-    MASS,
-    methods,
     dplyr,
-    ggplot2,
-    rlang (>= 0.3.1)
+    ggplot2
 Suggests:
     testthat,
     knitr,
@@ -27,7 +24,7 @@ Suggests:
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.2.1
+RoxygenNote: 7.2.2
 SystemRequirements: GNU make
 Biarch: true
 VignetteBuilder: knitr
