@@ -49,3 +49,9 @@ summarize_quantities = function(df, quantiles = c(0.25, 0.75)) {
     )
   return(summary)
 }
+
+
+# Jan: calculate metric of stabiltiy (CV or 1/CV)
+# Jan: compare all scenarios relative to fixed pre
+# Toby: include non-linear relationship between price and participation (harvest)
+# Dave: compare short v long management response

@@ -57,6 +57,7 @@ sim <- function(sims = 1000, # number of simulations
 
   # add extra time steps so first 'time lag' ones can be thrown out
   if(time_lag > 0) time_steps <- time_steps + time_lag
+  time_steps <- time_steps + 1 # padded to remove first time step
 
   # transition matrix
   m = matrix(0, 2, 2)
@@ -236,8 +237,10 @@ sim <- function(sims = 1000, # number of simulations
   # filter out first 'time lag' ones can be thrown out
   if(time_lag > 0) {
     all_df$t <- all_df$t - time_lag
-    all_df = all_df[which(all_df$t > 0),]
+    all_df <- all_df[which(all_df$t > 0),]
   }
+  all_df <- all_df[which(all_df$t > 1),]
+  all_df$t <- all_df$t - 1
 
   # calculate net benefits - millions
   all_df$discount_netben <- all_df$net_benefits*all_df$discount/1000000
