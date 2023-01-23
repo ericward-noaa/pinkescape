@@ -74,6 +74,7 @@
 <span>  price_acf <span class="op">=</span> <span class="fl">0.7</span>,</span>
 <span>  price_cv <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  time_lag <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  msy_scenario <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"equilibrium"</span>, <span class="st">"msy"</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>,</span>
 <span>  seed <span class="op">=</span> <span class="fl">123</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -146,6 +147,11 @@ escapement rule is used</p></dd>
 0 but could be a positive integer (e.g. 10) to represent delays in the decision making process</p></dd>
 
 
+<dt>msy_scenario</dt>
+<dd><p>Scenario for maximum sustainable yield (MSY). Defaults to "equilibrium" where values are constant regardless of spawner abundance. Can
+also be "msy", where values are updated each year</p></dd>
+
+
 <dt>seed</dt>
 <dd><p>Seed for random number generation, defaults to 123</p></dd>
 
@@ -169,7 +175,7 @@ escapement rule is used</p></dd>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.6.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer></div>

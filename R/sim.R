@@ -17,6 +17,8 @@
 #' @param price_linear_change The price change over the entire time series. This is linear in log space to keep prices positive. Defaults to 0
 #' @param price_acf The autocorrelation of prices. Defaults to 0.7, based on time series of pink salmon prices in Prince William Sound, 1984 - 2021
 #' @param price_cv The coefficient of variation, or standard deviation in log space of prices. Defaults to 0 (realistic values based on time series of pink salmon prices in Prince William Sound, 1984 - 2021 = 0.1)
+#' @param msy_scenario Scenario for maximum sustainable yield (MSY). Defaults to "equilibrium" where values are constant regardless of spawner abundance. Can
+#'also be "msy", where values are updated each year
 #' @param seed Seed for random number generation, defaults to 123
 #' @return data frame of simulations
 #'
@@ -41,6 +43,7 @@ sim <- function(sims = 1000, # number of simulations
                 price_acf = 0.7, # default based on PWS pink salmon 1984 - 2021
                 price_cv = 0, # default based on PWS pink salmon 1984 - 2021
                 time_lag = 0,
+                msy_scenario = c("equilibrium","msy")[1],
                 seed = 123) {
 
   if(is.null(ricker_pars)) {
@@ -135,7 +138,36 @@ sim <- function(sims = 1000, # number of simulations
         if(1 > time_lag) harvest = max(rec - o$minimum, 0) # use numerical solution
       }
     } else {
-      harvest = max(rec - ricker_pars$S_star[x[1]], 0)
+      if(msy_scenario == "msy") {
+        if(deterministic_model == TRUE) {
+          func = function(S) {
+            bS = ricker_pars$b[x[1]]*S
+            abS = ricker_pars$a[x[1]] + bS
+            obj <- (1 + bS) * exp(abS)
+            return(obj)
+          }
+          o <- optimize(func, lower = 0.001, upper = 20, maximum = FALSE)
+          harvest = 0
+          if(1 > time_lag) harvest = max(rec - o$minimum, 0) # use numerical solution
+        } else {
+          func = function(S) {
+            bS[1] <- ricker_pars$b[1]*S
+            bS[2] <- ricker_pars$b[2]*S
+            eab[1] <- exp(ricker_pars$a[1] + bS[1])
+            eab[2] <- exp(ricker_pars$a[2] + bS[2])
+            if(x[1] == 1) {
+              obj <- (1 + bS[1]) * eab[1]
+            } else {
+              obj <- (1 + bS[2]) * eab[2]
+            }
+            return(obj)
+          }
+          o <- optimize(func, lower = 0.001, upper = 20, maximum = FALSE)
+          harvest = 0
+          if(1 > time_lag) harvest = max(rec - o$minimum, 0) # use numerical solution
+        }
+      }
+      if(msy_scenario == "equilibrium") harvest = max(rec - ricker_pars$S_star[x[1]], 0)
     }
 
     net_benefits = 0 # needs to be updated
@@ -171,19 +203,12 @@ sim <- function(sims = 1000, # number of simulations
         } else {
           if(t > time_lag) {
             func = function(S) {
-              bS[1] <- ricker_pars$b[1]*S
-              bS[2] <- ricker_pars$b[2]*S
-              eab[1] <- exp(ricker_pars$a[1] + bS[1])
-              eab[2] <- exp(ricker_pars$a[2] + bS[2])
+              bS <- ricker_pars$b[x[t - time_lag]]*S
+              eab <- exp(ricker_pars$a[x[t - time_lag]] + bS[x[t - time_lag]])
               c = ricker_pars$cst_param_calib[x[1]] # not time or state varying
               p = prices[t] # time but not state varying
-              tot[1] <- (pr_12 * (p - c / (S * eab[2])) * (1 + bS[2]) * eab[2] + (1 - pr_12) * (p - c / (S * eab[1])) * (1 + bS[1]) * eab[1]) / (p - c/S)
-              tot[2] <- (pr_21 * (p - c / (S * eab[1])) * (1 + bS[1]) * eab[1] + (1 - pr_21) * (p - c / (S * eab[2])) * (1 + bS[2]) * eab[2]) / (p - c/S)
-              if(x[t-time_lag] == 1) {
-                obj <- (tot[1] - (1+discount_rate))^2 # in state 1
-              } else {
-                obj <- (tot[2] - (1+discount_rate))^2 # in state 2
-              }
+              tot <- (pr_12 * (p - c / (S * eab)) * (1 + bS) * eab + (1 - pr_12) * (p - c / (S * eab)) * (1 + bS) * eab) / (p - c/S)
+              obj <- (tot - (1+discount_rate))^2 # in state 1
               return(obj)
             }
             o <- optimize(func, lower = 0.001, upper = 20, maximum = FALSE)
@@ -192,9 +217,35 @@ sim <- function(sims = 1000, # number of simulations
           if(t > time_lag) harvest[t] = max(rec[t] - o$minimum, 0) # use numerical solution
         }
       } else {
-        # add optional time lag, defaults to 0
-        harvest[t] <- 0
-        if(t > time_lag) harvest[t] <- max(rec[t] - ricker_pars$S_star[x[t - time_lag]], 0)
+
+        if(msy_scenario == "msy") {
+          if(deterministic_model == TRUE) {
+            if(t > time_lag) {
+              func = function(S) {
+                obj <- (1 + ricker_pars$b[x[t - time_lag]]*S) * exp(ricker_pars$a[x[t - time_lag]] + ricker_pars$b[x[t - time_lag]]*S)
+                return(obj)
+              }
+              o <- optimize(func, lower = 0.001, upper = 20, maximum = FALSE)
+            }
+            harvest[t] = 0
+            if(t > time_lag) harvest[t] = max(rec[t] - o$minimum, 0) # use numerical solution
+          } else {
+            if(t > time_lag) {
+              func = function(S) {
+                obj <- (1 + ricker_pars$b[x[t - time_lag]]*S) * exp(ricker_pars$a[x[t - time_lag]] + ricker_pars$b[x[t - time_lag]]*S)
+                return(obj)
+              }
+              o <- optimize(func, lower = 0.001, upper = 20, maximum = FALSE)
+            }
+            harvest[t] = 0
+            if(t > time_lag) harvest[t] = max(rec[t] - o$minimum, 0) # use numerical solution
+          }
+        }
+        if(msy_scenario == "equilibrium") {
+          # add optional time lag, defaults to 0
+          harvest[t] <- 0
+          if(t > time_lag) harvest[t] <- max(rec[t] - ricker_pars$S_star[x[t - time_lag]], 0)
+        }
       }
 
       # add in harvest variability

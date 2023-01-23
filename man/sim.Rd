@@ -21,6 +21,7 @@ sim(
   price_acf = 0.7,
   price_cv = 0,
   time_lag = 0,
+  msy_scenario = c("equilibrium", "msy")[1],
   seed = 123
 )
 }
@@ -58,6 +59,9 @@ escapement rule is used}
 
 \item{time_lag}{Optional, represents a delay in how fast response is to the actual regime. Defaults to
 0 but could be a positive integer (e.g. 10) to represent delays in the decision making process}
+
+\item{msy_scenario}{Scenario for maximum sustainable yield (MSY). Defaults to "equilibrium" where values are constant regardless of spawner abundance. Can
+also be "msy", where values are updated each year}
 
 \item{seed}{Seed for random number generation, defaults to 123}
 }
