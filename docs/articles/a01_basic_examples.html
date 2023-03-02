@@ -73,7 +73,7 @@
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Simulation examples</h1>
             
-            <h4 data-toc-skip class="date">2023-01-23</h4>
+            <h4 data-toc-skip class="date">2023-03-02</h4>
       
       
       <div class="hidden name"><code>a01_basic_examples.Rmd</code></div>
@@ -210,6 +210,46 @@ custom</p>
 <p>These can be passed into the simulation now</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">custom_sims</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sim.html">sim</a></span><span class="op">(</span>ricker_pars <span class="op">=</span> <span class="va">pars</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="adding-msy-rules">Adding MSY rules<a class="anchor" aria-label="anchor" href="#adding-msy-rules"></a>
+</h2>
+<p>We also allow for the decision rules to be altered. By default, the
+simulations use a constant escapement rule (“equilibrium”). The full
+arguments for the simulation function (with defaults) are below:</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/sim.html">sim</a></span><span class="op">(</span>sims <span class="op">=</span> <span class="fl">1000</span>, <span class="co"># number of simulations</span></span>
+<span>                time_steps <span class="op">=</span> <span class="fl">100</span>,</span>
+<span>                ricker_pars <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>                pr_12 <span class="op">=</span> <span class="fl">0.1</span>,<span class="co"># probability transitioning 1:2</span></span>
+<span>                pr_21 <span class="op">=</span> <span class="fl">0.1</span>,<span class="co"># probability transitioning 2:1</span></span>
+<span>                run <span class="op">=</span> <span class="st">"odd"</span>,</span>
+<span>                deterministic_model <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>                rec_std <span class="op">=</span> <span class="fl">0.1</span>, <span class="co"># recruitment standard deviation in log space</span></span>
+<span>                rec_acf <span class="op">=</span> <span class="fl">0.7</span>, <span class="co"># recruitment autocorrelation in time</span></span>
+<span>                escapement_rule <span class="op">=</span> <span class="st">"both"</span>,</span>
+<span>                harvest_CV <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>                discount_rate <span class="op">=</span> <span class="fl">0.1</span>,</span>
+<span>                price_linear_change <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>                price_acf <span class="op">=</span> <span class="fl">0.7</span>, <span class="co"># default based on PWS pink salmon 1984 - 2021</span></span>
+<span>                price_cv <span class="op">=</span> <span class="fl">0</span>, <span class="co"># default based on PWS pink salmon 1984 - 2021</span></span>
+<span>                time_lag <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>                msy_scenario <span class="op">=</span> <span class="st">"equilibrium"</span><span class="op">)</span></span></code></pre></div>
+<p>When the <code>msy_scenario</code> is equilibrium, then harvest at
+each time step is the difference between the returning abundance and
+optimal spawning stock size (can be adjusted by manipulating
+<code>ricker_pars$S_star</code>).</p>
+<p>Alternatively, we can change the <code>msy_scenario</code> to
+<code>msy</code>. For this scenario, in each time step, we find the
+optimal spawning size <code>S</code> that maximizes the Ricker function.
+For both the deterministic and stochastic versions of the simulation,
+this function is</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="va">ricker_pars</span><span class="op">$</span><span class="va">b</span><span class="op">[</span><span class="va">x</span><span class="op">[</span><span class="va">t</span> <span class="op">-</span> <span class="va">time_lag</span><span class="op">]</span><span class="op">]</span><span class="op">*</span><span class="va">S</span><span class="op">)</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="va">ricker_pars</span><span class="op">$</span><span class="va">a</span><span class="op">[</span><span class="va">x</span><span class="op">[</span><span class="va">t</span> <span class="op">-</span> <span class="va">time_lag</span><span class="op">]</span><span class="op">]</span> <span class="op">+</span> <span class="va">ricker_pars</span><span class="op">$</span><span class="va">b</span><span class="op">[</span><span class="va">x</span><span class="op">[</span><span class="va">t</span> <span class="op">-</span> <span class="va">time_lag</span><span class="op">]</span><span class="op">]</span><span class="op">*</span><span class="va">S</span><span class="op">)</span></span></code></pre></div>
+<p>where <code>x</code> represents the discrete regime assigned to each
+time step, <code>t</code> is the year of interest, <code>time_lag</code>
+represents and optional time lag, and <code>a</code> and <code>b</code>
+are Ricker parameters.</p>
 </div>
   </div>
 

@@ -126,4 +126,36 @@ These can be passed into the simulation now
 custom_sims <- sim(ricker_pars = pars)
 ```
 
+## Adding MSY rules
 
+We also allow for the decision rules to be altered. By default, the simulations use a constant escapement rule ("equilibrium"). The full arguments for the simulation function (with defaults) are below:
+
+```{r eval=FALSE}
+sim(sims = 1000, # number of simulations
+                time_steps = 100,
+                ricker_pars = NULL,
+                pr_12 = 0.1,# probability transitioning 1:2
+                pr_21 = 0.1,# probability transitioning 2:1
+                run = "odd",
+                deterministic_model = TRUE,
+                rec_std = 0.1, # recruitment standard deviation in log space
+                rec_acf = 0.7, # recruitment autocorrelation in time
+                escapement_rule = "both",
+                harvest_CV = 0,
+                discount_rate = 0.1,
+                price_linear_change = 0,
+                price_acf = 0.7, # default based on PWS pink salmon 1984 - 2021
+                price_cv = 0, # default based on PWS pink salmon 1984 - 2021
+                time_lag = 0,
+                msy_scenario = "equilibrium")
+```
+
+When the `msy_scenario` is equilibrium, then harvest at each time step is the difference between the returning abundance and optimal spawning stock size (can be adjusted by manipulating `ricker_pars$S_star`). 
+
+Alternatively, we can change the `msy_scenario` to `msy`. For this scenario, in each time step, we find the optimal spawning size `S` that maximizes the Ricker function. For both the deterministic and stochastic versions of the simulation, this function is 
+
+```{r eval = FALSE}
+(1 + ricker_pars$b[x[t - time_lag]]*S) * exp(ricker_pars$a[x[t - time_lag]] + ricker_pars$b[x[t - time_lag]]*S)
+```
+
+where `x` represents the discrete regime assigned to each time step, `t` is the year of interest, `time_lag` represents and optional time lag, and `a` and `b` are Ricker parameters. 
