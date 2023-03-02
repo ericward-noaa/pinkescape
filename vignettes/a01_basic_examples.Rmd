@@ -152,7 +152,7 @@ sim(sims = 1000, # number of simulations
 
 When the `msy_scenario` is equilibrium, then harvest at each time step is the difference between the returning abundance and optimal spawning stock size (can be adjusted by manipulating `ricker_pars$S_star`). 
 
-Alternatively, we can change the `msy_scenario` to `msy`. For this scenario, in each time step, we find the optimal spawning size `S` that maximizes the Ricker function. For both the deterministic and stochastic versions of the simulation, this function is 
+Alternatively, we can change the `msy_scenario` to `msy`. For this scenario, in each time step, we find the optimal spawning size `S` that maximizes the Ricker function. For both the deterministic and stochastic versions of the simulation -- without any price feedbacks, this function is 
 
 ```{r eval = FALSE}
 (1 + ricker_pars$b[x[t - time_lag]]*S) * exp(ricker_pars$a[x[t - time_lag]] + ricker_pars$b[x[t - time_lag]]*S)

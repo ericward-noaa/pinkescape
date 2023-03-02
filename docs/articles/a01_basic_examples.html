@@ -242,8 +242,8 @@ optimal spawning stock size (can be adjusted by manipulating
 <p>Alternatively, we can change the <code>msy_scenario</code> to
 <code>msy</code>. For this scenario, in each time step, we find the
 optimal spawning size <code>S</code> that maximizes the Ricker function.
-For both the deterministic and stochastic versions of the simulation,
-this function is</p>
+For both the deterministic and stochastic versions of the simulation –
+without any price feedbacks, this function is</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="va">ricker_pars</span><span class="op">$</span><span class="va">b</span><span class="op">[</span><span class="va">x</span><span class="op">[</span><span class="va">t</span> <span class="op">-</span> <span class="va">time_lag</span><span class="op">]</span><span class="op">]</span><span class="op">*</span><span class="va">S</span><span class="op">)</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="va">ricker_pars</span><span class="op">$</span><span class="va">a</span><span class="op">[</span><span class="va">x</span><span class="op">[</span><span class="va">t</span> <span class="op">-</span> <span class="va">time_lag</span><span class="op">]</span><span class="op">]</span> <span class="op">+</span> <span class="va">ricker_pars</span><span class="op">$</span><span class="va">b</span><span class="op">[</span><span class="va">x</span><span class="op">[</span><span class="va">t</span> <span class="op">-</span> <span class="va">time_lag</span><span class="op">]</span><span class="op">]</span><span class="op">*</span><span class="va">S</span><span class="op">)</span></span></code></pre></div>
 <p>where <code>x</code> represents the discrete regime assigned to each
