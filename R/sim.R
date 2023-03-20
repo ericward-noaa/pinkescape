@@ -118,6 +118,7 @@ sim <- function(sims = 1000, # number of simulations
         if(1 > time_lag) harvest = max(rec - o$minimum, 0) # use numerical solution
       } else {
         func = function(S) {
+          bS <- eab <- tot <- rep(0,2)
           bS[1] <- ricker_pars$b[1]*S
           bS[2] <- ricker_pars$b[2]*S
           eab[1] <- exp(ricker_pars$a[1] + bS[1])
@@ -151,6 +152,7 @@ sim <- function(sims = 1000, # number of simulations
           if(1 > time_lag) harvest = max(rec - o$minimum, 0) # use numerical solution
         } else {
           func = function(S) {
+            bS <- eab <- tot <- rep(0,2)
             bS[1] <- ricker_pars$b[1]*S
             bS[2] <- ricker_pars$b[2]*S
             eab[1] <- exp(ricker_pars$a[1] + bS[1])
