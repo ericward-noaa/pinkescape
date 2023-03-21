@@ -1,0 +1,405 @@
+---
+title: "Make tables"
+format: pdf
+editor: visual
+---
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+library(pinkescape)
+library(dplyr)
+library(ggplot2)
+library(viridis)
+library(ggpubr)
+library(kableExtra)
+library(ggplot2)
+library(knitr)
+library(kableExtra)
+```
+
+```{r figures, cache=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+
+scenarios = expand.grid(run_name = c("rec_sd",
+             "rec_sd_pricevar",
+             "time_lag",
+             "time_lag_pricevar",
+             "price_decline",
+             "price_decline_pricevar",
+             "transprob",
+             "transprob_pricevar"),
+             run_type = c("odd","even"))
+tabl_harvest = NULL
+tabl_benrec = NULL
+
+for(i in 1:nrow(scenarios)) {
+
+  # df is a 2-element list
+  dfs = readRDS(file = paste0("model_output/",scenarios$run_type[i],"/",scenarios$run_name[i],".rds"))
+  
+  # collapse list of dataframes to single data frame
+  df <- bind_rows(dfs)
+
+  # calculate discounted net benefit
+  df$discount_nb <- (df$net_benefits*df$discount)/1000000
+
+  # calculate the sum for each simulation / scenario
+  summary_all = dplyr::group_by(df, sim, scenario) %>% 
+    dplyr::mutate(cum_ben = cumsum(discount_nb),
+                  acum_ben = cumsum(discount_nb)*(.1/(1-(1+.1)^(-100))),
+                  cum_harv = cumsum(harvest),
+                  cum_rec = cumsum(rec))
+# this is separated so that summary_all can be used below
+summary = summary_all %>%
+  dplyr::group_by(t, scenario) %>% 
+  dplyr::summarise(lo25_acnb = quantile(acum_ben, 0.25),
+                   hi75_acnb = quantile(acum_ben, 0.75),
+                   m_acnb = mean(acum_ben),
+                   med_acnb = median(acum_ben),
+                   lo25_nb = quantile(net_benefits, 0.25),
+                   hi75_nb = quantile(net_benefits, 0.75),
+                   m_nb = mean(net_benefits[which(net_benefits > 0)]),
+                   med_nb = median(net_benefits),
+                   zero_nb = length(which(net_benefits==0))/length(net_benefits),
+                   lo25_ben = quantile(cum_ben, 0.25),
+                   hi75_ben = quantile(cum_ben, 0.75),
+                   m_ben = mean(cum_ben[which(cum_ben > 0)]),
+                   med_ben = median(cum_ben),
+                   zero_ben = length(which(cum_ben==0))/length(cum_ben),
+                   ann_ben_lo25 = quantile(discount_nb, 0.25),
+                   ann_ben_hi75 = quantile(discount_nb, 0.75),
+                   ann_ben_50 = quantile(discount_nb, 0.5),
+                   ann_ben_mean = mean(discount_nb[which(discount_nb > 0)]),
+                   zero_ann_ben = length(which(discount_nb==0))/length(discount_nb),
+                   lo25_h = quantile(cum_harv, 0.25),
+                   hi75_h = quantile(cum_harv, 0.75),
+                   m_h = mean(cum_harv[which(cum_harv > 0)]),
+                   zero_h = length(which(cum_harv==0))/length(cum_harv),
+                   med_h = median(cum_harv),
+                   ann_harvest_lo25 = quantile(harvest[which(harvest > 0)], 0.25),
+                   ann_harvest_hi75 = quantile(harvest[which(harvest > 0)], 0.75),
+                   ann_harvest_50 = quantile(harvest[which(harvest > 0)], 0.5),
+                   ann_harvest_mean = mean(harvest[which(harvest > 0)]),
+                   zero_ann_harvest = length(which(harvest==0))/length(harvest),
+                   lo25_rec = quantile(cum_rec, 0.25),
+                   hi75_rec = quantile(cum_rec, 0.75),
+                   m_rec = mean(cum_rec[which(cum_rec > 0)]),
+                   zero_rec = length(which(cum_rec==0))/length(cum_rec),
+                   med_rec = median(cum_rec),
+                   ann_rec_lo25 = quantile(rec, 0.25),
+                   ann_rec_hi75 = quantile(rec, 0.75),
+                   ann_rec_50 = quantile(rec, 0.5),
+                   ann_rec_mean = mean(rec),
+                   zero_ann_rec = length(which(rec==0))/length(rec),
+                   ann_esc= rec-harvest,
+                   ann_esc_lo25 = quantile(ann_esc, 0.25),
+                   ann_esc_hi75 = quantile(ann_esc, 0.75),
+                   ann_esc_50 = quantile(ann_esc, 0.5),
+                   ann_esc_mean=mean(ann_esc[which(ann_esc > 0)]),
+                   zero_esc = length(which(ann_esc==0))/length(ann_esc)
+                   )
+
+pdf(paste0("plots/",scenarios$run_type[i],"/",scenarios$run_name[i],".pdf"))
+g0ac <- summary_all %>%
+  dplyr::filter(t == max(summary_all$t)) %>%
+  ggplot(aes(scenario, acum_ben)) + 
+    geom_boxplot(outlier.colour = NA) + 
+  xlab("Recruitment sd") + 
+  ylab("Levelized net benefits, $M") +
+  theme(aspect.ratio=1/1)+
+  ylim(NA, 100) 
+print(g0ac)
+#ggsave("g0ac_recCV.pdf", width = 4, height = 4)
+
+g0a <- summary_all %>%
+  dplyr::filter(t == max(summary_all$t)) %>%
+  ggplot(aes(scenario, cum_ben)) + 
+    geom_boxplot(outlier.colour = NA) + 
+  xlab("Recruitment sd") + 
+  ylab("Cumulative net benefits, $M") +
+  theme(aspect.ratio=1/1)+
+  ylim(NA, 500) 
+#ggsave("g0a_recCV.pdf", width = 4, height = 4)
+print(g0a)
+
+g0c <- summary_all %>%
+  dplyr::filter(t == max(summary_all$t)) %>%
+  ggplot(aes(scenario, cum_harv)) + 
+    geom_boxplot(outlier.colour = NA) + 
+  xlab("Recruitment sd") + 
+  ylab("Cumulative harvests")+
+  theme(aspect.ratio=1/1) +
+  ylim(NA, 1250)
+print(g0c)
+#ggsave("g0c_recCV.pdf", width = 4, height = 4)
+
+g0d <- summary_all %>%
+  dplyr::filter(t == max(summary_all$t)) %>%
+  ggplot(aes(scenario, cum_rec)) + 
+    geom_boxplot(outlier.colour = NA) + 
+  xlab("Recruitment sd") + 
+  ylab("Cumulative recruitment")+
+  theme(aspect.ratio=1/1) +
+  ylim(NA, 2500)
+print(g0d)
+#ggsave("g0d_recCV.pdf", width = 4, height = 4)
+
+g0b <- ggplot(summary, aes(t, zero_ann_harvest, col = scenario, fill = scenario)) +
+  #geom_ribbon(aes(ymin=lo25_ben, ymax=hi75_ben), alpha=0.5, col=NA) +
+  geom_line() +
+  ylab("Pr harvest(0)") + 
+  xlab("Time") + 
+  scale_color_viridis_d(end=0.4) + 
+  scale_fill_viridis_d(end=0.4) + 
+  guides(fill=guide_legend(title="Recruitment sd"),
+         col=guide_legend(title="Recruitment sd"))+
+  theme(aspect.ratio=1/1)
+g0b1<-g0b + theme(legend.position="top")
+print(g0b1)
+#ggsave("g0b_recCV.pdf", width = 4, height = 4)
+
+g0bh <- ggplot(summary, aes(t, ann_harvest_mean, col = scenario, fill = scenario)) +
+  #geom_ribbon(aes(ymin=lo25_ben, ymax=hi75_ben), alpha=0.5, col=NA) +
+  geom_line() +
+  ylab("Mean annual harvest (if h>0)") + 
+  xlab("Time") + 
+  scale_color_viridis_d(end=0.4) + 
+  scale_fill_viridis_d(end=0.4) +
+  ylim(0,NA)+ 
+  guides(fill=guide_legend(title="Recruitment sd"),
+         col=guide_legend(title="Recruitment sd"))+
+  theme(aspect.ratio=1/1)
+g0bh1<-g0bh + theme(legend.position="top")
+print(g0bh1)
+#ggsave("g0bh_recCV.pdf", width = 4, height = 4)
+
+g0br <- ggplot(summary, aes(t, ann_rec_mean, col = scenario, fill = scenario)) +
+  #geom_ribbon(aes(ymin=lo25_ben, ymax=hi75_ben), alpha=0.5, col=NA) +
+  geom_line() +
+  ylab("Mean annual recruitment") + 
+  xlab("Time") + 
+  scale_color_viridis_d(end=0.4) + 
+  scale_fill_viridis_d(end=0.4) +
+  ylim(0,NA)+ 
+  guides(fill=guide_legend(title="Recruitment sd"),
+         col=guide_legend(title="Recruitment sd"))+
+  theme(aspect.ratio=1/1)
+g0br1<-g0br + theme(legend.position="top")
+print(g0br1)
+#ggsave("g0br_recCV.pdf", width = 4, height = 4)
+
+g0bnb <- ggplot(summary, aes(t, m_nb/1000000, col = scenario, fill = scenario)) +
+  #geom_ribbon(aes(ymin=lo25_ben, ymax=hi75_ben), alpha=0.5, col=NA) +
+  geom_line() +
+  ylab("Mean annual net benefit, $m") + 
+  xlab("Time") + 
+  scale_color_viridis_d(end=0.4) + 
+  scale_fill_viridis_d(end=0.4) + 
+  guides(fill=guide_legend(title="Recruitment sd"),
+         col=guide_legend(title="Recruitment sd"))+
+  theme(aspect.ratio=1/1)
+g0bnb1<-g0bnb + theme(legend.position="top")
+print(g0bnb1)
+#ggsave("g0bnb_recCV.pdf", width = 4, height = 4)
+
+g1 <- ggplot(summary, aes(t, med_ben, col = scenario, fill = scenario)) + 
+  geom_ribbon(aes(ymin=lo25_ben, ymax=hi75_ben), alpha=0.5, col=NA) +
+  geom_line(aes(t,med_ben)) +
+  ylab("Discounted net benefits, $M") + 
+  xlab("Time") + 
+  scale_color_viridis_d(end=0.4) + 
+  scale_fill_viridis_d(end=0.4) + 
+  guides(fill=guide_legend(title="Recruitment sd"),
+         col=guide_legend(title="Recruitment sd"))
+
+g2 <- ggplot(summary, aes(t, med_h, col = scenario, fill = scenario)) + 
+  geom_ribbon(aes(ymin=lo25_h, ymax=hi75_h), alpha=0.5, col=NA) + 
+  geom_line(aes(t,med_h)) +
+  ylab("Cumulative harvest") + 
+  xlab("Time") + 
+  scale_color_viridis_d(end=0.4) + 
+  scale_fill_viridis_d(end=0.4) + 
+  guides(fill=guide_legend(title="Recruitment sd"),
+         col=guide_legend(title="Recruitment sd"))
+
+g3 <- ggplot(summary, aes(t, med_rec, col = scenario, fill = scenario)) + 
+  geom_ribbon(aes(ymin=lo25_rec, ymax=hi75_rec), alpha=0.5, col=NA) + 
+  geom_line(aes(t,med_rec)) +
+  ylab("Cumulative recruitment") + 
+  xlab("Time") + 
+  scale_color_viridis_d(end=0.4) + 
+  scale_fill_viridis_d(end=0.4) + 
+  guides(fill=guide_legend(title="Recruitment sd"),
+         col=guide_legend(title="Recruitment sd"))
+
+g4 <- ggplot(summary, aes(t, m_acnb, col = scenario, fill = scenario)) + 
+  geom_ribbon(aes(ymin=lo25_acnb, ymax=hi75_acnb), alpha=0.5, col=NA) + 
+  geom_line(aes(t,m_acnb)) +
+  ylab("Annualized net benefits") + 
+  xlab("Time") + 
+  scale_color_viridis_d(end=0.4) + 
+  scale_fill_viridis_d(end=0.4) + 
+  guides(fill=guide_legend(title="Recruitment sd"),
+         col=guide_legend(title="Recruitment sd")) 
+
+print(g4)
+#ggsave("g4ac_recCV.pdf", width = 6, height = 4)
+
+g5 <- ggplot(summary, aes(t, ann_harvest_mean, col = scenario, fill = scenario)) + 
+  geom_ribbon(aes(ymin=ann_harvest_lo25, ymax=ann_harvest_hi75), alpha=0.5, col=NA) + 
+  geom_line(aes(t,ann_harvest_mean)) +
+  ylab("Annual harvest") + 
+  xlab("Time") + 
+  scale_color_viridis_d(end=0.4) + 
+  scale_fill_viridis_d(end=0.4) + 
+  guides(fill=guide_legend(title="Recruitment sd"),
+         col=guide_legend(title="Recruitment sd"))
+
+print(g5)
+#ggsave("g4ah_recCV.pdf", width = 6, height = 4)
+
+g6 <- ggplot(summary, aes(t, ann_rec_50, col = scenario, fill = scenario)) + 
+  geom_ribbon(aes(ymin=ann_rec_lo25, ymax=ann_rec_hi75), alpha=0.5, col=NA) + 
+  geom_line(aes(t,ann_rec_50)) +
+  ylab("Annual recruitment") + 
+  xlab("Time") + 
+  scale_color_viridis_d(end=0.4) + 
+  scale_fill_viridis_d(end=0.4) + 
+  guides(fill=guide_legend(title="Recruitment sd"),
+         col=guide_legend(title="Recruitment sd")) 
+
+g7 <- ggplot(summary, aes(t, ann_esc_50, col = scenario, fill = scenario)) + 
+  geom_ribbon(aes(ymin=ann_esc_lo25, ymax=ann_esc_hi75), alpha=0.5, col=NA) + 
+  geom_line(aes(t,ann_esc_50))+
+  ylab("Annual escapement") + 
+  xlab("Time") + 
+  scale_color_viridis_d(end=0.4) + 
+  scale_fill_viridis_d(end=0.4) + 
+  guides(fill=guide_legend(title="Recruitment sd"),
+         col=guide_legend(title="Recruitment sd")) 
+g8 <- ggplot(summary, aes(t, med_nb, col = scenario, fill = scenario)) + 
+  geom_ribbon(aes(ymin=lo25_nb, ymax=hi75_nb), alpha=0.5, col=NA) + 
+  geom_line(aes(t,med_nb)) +
+  ylab("Net benefits, $") + 
+  xlab("Time") + 
+  scale_color_viridis_d(end=0.4) + 
+  scale_fill_viridis_d(end=0.4) + 
+  guides(fill=guide_legend(title="Recruitment sd"),
+         col=guide_legend(title="Recruitment sd")) 
+
+g88 <- g8 + theme(axis.title.x = element_text(face="bold", colour="black", size=60),
+           axis.text.x  = element_text(angle=0, vjust=0.5, size=56),
+           axis.title.y = element_text(face="bold", colour="black", size=60),
+           axis.text.y  = element_text(angle=0, vjust=0.5, size=56),
+           legend.position="top",
+           legend.title = element_text(colour="black", size=65, face="bold"),
+           legend.text = element_text(colour="black", size=65, face="bold"),
+           legend.key.size = unit(2, "cm"))
+
+
+g7 + theme(axis.title.x = element_text(face="bold", colour="black", size=60),
+           axis.text.x  = element_text(angle=0, vjust=0.5, size=56),
+           axis.title.y = element_text(face="bold", colour="black", size=60),
+           axis.text.y  = element_text(angle=0, vjust=0.5, size=56),
+           legend.position="top",
+           legend.title = element_text(colour="black", size=65, face="bold"),
+           legend.text = element_text(colour="black", size=65, face="bold"),
+           legend.key.size = unit(2, "cm"))
+g11 <- g1 + theme(axis.title.x = element_text(face="bold", colour="black", size=20),
+           axis.text.x  = element_text(angle=0, vjust=0.5, size=20),
+           axis.title.y = element_text(face="bold", colour="black", size=15),
+           axis.text.y  = element_text(angle=0, vjust=0.5, size=20),
+           legend.position="top",
+           legend.title = element_text(colour="black", size=45, face="bold"),
+           legend.text = element_text(colour="black", size=45, face="bold"),
+           legend.key.size = unit(2, "cm"))
+g22 <- g2 + theme(axis.title.x = element_text(face="bold", colour="black", size=20),
+           axis.text.x  = element_text(angle=0, vjust=0.5, size=20),
+           axis.title.y = element_text(face="bold", colour="black", size=15),
+           axis.text.y  = element_text(angle=0, vjust=0.5, size=20),
+           legend.position="top",
+           legend.title = element_text(colour="black", size=45, face="bold"),
+           legend.text = element_text(colour="black", size=45, face="bold"),
+           legend.key.size = unit(2, "cm"))
+g33 <- g3 + theme(axis.title.x = element_text(face="bold", colour="black", size=20),
+           axis.text.x  = element_text(angle=0, vjust=0.5, size=20),
+           axis.title.y = element_text(face="bold", colour="black", size=15),
+           axis.text.y  = element_text(angle=0, vjust=0.5, size=20),
+           legend.position="top",
+           legend.title = element_text(colour="black", size=45, face="bold"),
+           legend.text = element_text(colour="black", size=45, face="bold"),
+           legend.key.size = unit(2, "cm"))
+g55 <- g5 + theme(axis.title.x = element_text(face="bold", colour="black", size=20),
+           axis.text.x  = element_text(angle=0, vjust=0.5, size=20),
+           axis.title.y = element_text(face="bold", colour="black", size=15),
+           axis.text.y  = element_text(angle=0, vjust=0.5, size=20),
+           legend.position="top",
+           legend.title = element_text(colour="black", size=45, face="bold"),
+           legend.text = element_text(colour="black", size=45, face="bold"),
+           legend.key.size = unit(2, "cm"))
+g66 <-g6 + theme(axis.title.x = element_text(face="bold", colour="black", size=20),
+           axis.text.x  = element_text(angle=0, vjust=0.5, size=20),
+           axis.title.y = element_text(face="bold", colour="black", size=15),
+           axis.text.y  = element_text(angle=0, vjust=0.5, size=20),
+           legend.position="top",
+           legend.title = element_text(colour="black", size=45, face="bold"),
+           legend.text = element_text(colour="black", size=45, face="bold"),
+           legend.key.size = unit(2, "cm"))
+g44<-g4 + theme(axis.title.x = element_text(face="bold", colour="black", size=60),
+           axis.text.x  = element_text(angle=0, vjust=0.5, size=56),
+           axis.title.y = element_text(face="bold", colour="black", size=60),
+           axis.text.y  = element_text(angle=0, vjust=0.5, size=56),
+           legend.position="top",
+           legend.title = element_text(colour="black", size=65, face="bold"),
+           legend.text = element_text(colour="black", size=65, face="bold"),
+           legend.key.size = unit(2, "cm"))
+
+print(ggarrange(g5, g6, ncol=1, common.legend = TRUE, legend="top"))
+print(ggarrange(g11, g55, g66, ncol=1, common.legend = TRUE, legend="top"))
+print(ggarrange(g11, g22, g33, ncol=1, common.legend = TRUE, legend="top"))
+print(ggarrange(g4, g5, g6, ncol=1, common.legend = TRUE, legend="top"))
+g0a1 <- g0a + theme(axis.title.x = element_text(face="bold", colour="black", size=20),
+           axis.text.x  = element_text(angle=0, vjust=0.5, size=20),
+           axis.title.y = element_text(face="bold", colour="black", size=15),
+           axis.text.y  = element_text(angle=0, vjust=0.5, size=20),
+           legend.position="top",
+           legend.title = element_text(colour="black", size=45, face="bold"),
+           legend.text = element_text(colour="black", size=45, face="bold"),
+           legend.key.size = unit(2, "cm"))
+print(g0a1)
+#ggsave("g0a1.pdf", width = 4, height = 4)
+g0c1 <- g0c + theme(axis.title.x = element_text(face="bold", colour="black", size=20),
+           axis.text.x  = element_text(angle=0, vjust=0.5, size=20),
+           axis.title.y = element_text(face="bold", colour="black", size=15),
+           axis.text.y  = element_text(angle=0, vjust=0.5, size=20),
+           legend.position="top",
+           legend.title = element_text(colour="black", size=45, face="bold"),
+           legend.text = element_text(colour="black", size=45, face="bold"),
+           legend.key.size = unit(2, "cm"))
+g0d1 <- g0d + theme(axis.title.x = element_text(face="bold", colour="black", size=20),
+           axis.text.x  = element_text(angle=0, vjust=0.5, size=20),
+           axis.title.y = element_text(face="bold", colour="black", size=15),
+           axis.text.y  = element_text(angle=0, vjust=0.5, size=20),
+           legend.position="top",
+           legend.title = element_text(colour="black", size=45, face="bold"),
+           legend.text = element_text(colour="black", size=45, face="bold"),
+           legend.key.size = unit(2, "cm"))
+print(ggarrange(g0a1, g0c1, g0d1, ncol=1, common.legend = TRUE, legend="top"))
+
+
+g0b1<-g0b + theme(axis.title.x = element_text(face="bold", colour="black", size=60),
+           axis.text.x  = element_text(angle=0, vjust=0.5, size=56),
+           axis.title.y = element_text(face="bold", colour="black", size=60),
+           axis.text.y  = element_text(angle=0, vjust=0.5, size=56),
+           legend.position="top",
+           legend.title = element_text(colour="black", size=65, face="bold"),
+           legend.text = element_text(colour="black", size=65, face="bold"),
+           legend.key.size = unit(2, "cm"))
+#ggarrange(g44,g0b1, ncol=1, common.legend = TRUE, legend="top")
+dev.off()
+  #test %>%
+  #kbl(caption = paste(scenarios$run_name[i], scenarios$run_type[i]), 
+  #    digits = 3) %>%
+  #kable_paper("hover", full_width = F)
+}
+
+
+```

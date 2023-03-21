@@ -1,0 +1,302 @@
+---
+title: "Summary of model output"
+format: pdf
+editor: visual
+---
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+library(pinkescape)
+library(dplyr)
+library(ggplot2)
+library(viridis)
+library(ggpubr)
+library(kableExtra)
+library(ggplot2)
+```
+
+## Recruitment variability
+
+```{r sim1, cache=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+
+# loop over different values of recruitment
+rec_sd = c(0.1, 1.0)
+run_name = "rec_sd"
+
+for(run_type in c("odd","even")) {
+
+  dfs = list()
+  for(i in 1:length(rec_sd)) {
+  
+  dfs[[i]] = sim(
+    sims = 1000,
+    time_steps = 100,
+    run = run_type,
+    deterministic_model = FALSE,
+    pr_12 = 0.118,
+    pr_21 = 0.202,
+    escapement_rule = "both",
+    harvest_CV = 0,
+    discount_rate = 0.1,
+    price_linear_change = 0,
+    price_acf = 0,
+    price_cv = 0,
+    time_lag = 0,
+    rec_std = rec_sd[i],
+    seed = 123
+  )
+  dfs[[i]]$scenario <- paste(rec_sd[i])
+  }
+  saveRDS(dfs, file = paste0("model_output/",run_type,"/",run_name,".rds"))
+}
+```
+
+We can also relax the assumption about constant prices, and let prices be dynamic (correlated random walks) and impose a feedback onto optimal escapement rules (making the optimal escapement also time varying).
+
+```{r sim1b, cache=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+
+run_name = "rec_sd_pricevar"
+
+for(run_type in c("odd","even")) {
+
+  dfs = list()
+  for(i in 1:length(rec_sd)) {
+  
+  dfs[[i]] = sim(
+    sims = 1000,
+    time_steps = 100,
+    run = run_type,
+    deterministic_model = FALSE,
+    pr_12 = 0.118,
+    pr_21 = 0.202,
+    escapement_rule = "both",
+    harvest_CV = 0,
+    discount_rate = 0.1,
+    price_linear_change = 0,
+    price_acf = 0,
+    price_cv = 0.1,
+    time_lag = 0,
+    rec_std = rec_sd[i],
+    seed = 123
+  )
+  dfs[[i]]$scenario <- paste(rec_sd[i])
+  }
+  saveRDS(dfs, file = paste0("model_output/",run_type,"/",run_name,".rds"))
+}
+```
+
+\break
+
+## Management response
+
+```{r sim2, cache=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+
+
+run_name = "time_lag"
+time_lags = c(0,10)
+
+for(run_type in c("odd","even")) {
+  dfs = list()
+  for(i in 1:length(time_lags)) {
+  
+  dfs[[i]] = sim(
+    sims = 1000,
+    time_steps = 100,
+    run = run_type,
+    deterministic_model = FALSE,
+    pr_12 = 0.118,
+    pr_21 = 0.202,
+    escapement_rule = "both",
+    harvest_CV = 0,
+    discount_rate = 0.1,
+    price_linear_change = 0,
+    price_acf = 0,
+    price_cv = 0,
+    time_lag = time_lags[i],
+    rec_std = 0.1,
+    seed = 123
+  )
+  dfs[[i]]$scenario <- paste(time_lags[i])
+  }
+  saveRDS(dfs, file = paste0("model_output/",run_type,"/",run_name,".rds"))
+}
+```
+
+These plots demonstrate that a quick management response has a huge impact on total net benefits. The faster response scenario (time lag = 0) also translates into higher cumulative recruitment and harvest.
+
+Again we can illustrate the effect with dynamic prices
+
+```{r sim2b, cache=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+run_name = "time_lag_pricevar"
+time_lags = c(0,10)
+
+for(run_type in c("odd","even")) {
+  dfs = list()
+  for(i in 1:length(time_lags)) {
+  
+  dfs[[i]] = sim(
+    sims = 1000,
+    time_steps = 100,
+    run = run_type,
+    deterministic_model = FALSE,
+    pr_12 = 0.118,
+    pr_21 = 0.202,
+    escapement_rule = "both",
+    harvest_CV = 0,
+    discount_rate = 0.1,
+    price_linear_change = 0,
+    price_acf = 0,
+    price_cv = 0.1,
+    time_lag = time_lags[i],
+    rec_std = 0.1,
+    seed = 123
+  )
+  dfs[[i]]$scenario <- paste(time_lags[i])
+  }
+  saveRDS(dfs, file = paste0("model_output/",run_type,"/",run_name,".rds"))
+}
+```
+
+\break
+
+## Price Declines
+
+```{r sim3, cache=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+
+run_name = "price_decline"
+price_declines = c(0, -0.001)
+
+for(run_type in c("odd","even")) {
+  dfs = list()
+  for(i in 1:length(price_declines)) {
+  
+  dfs[[i]] = sim(
+    sims = 1000,
+    time_steps = 100,
+    run = run_type,
+    deterministic_model = FALSE,
+    pr_12 = 0.118,
+    pr_21 = 0.202,
+    escapement_rule = "both",
+    harvest_CV = 0,
+    discount_rate = 0.1,
+    price_linear_change = price_declines[i],
+    price_acf = 0,
+    price_cv = 0,
+    time_lag = 0,
+    rec_std = 0.1,
+    seed = 123
+  )
+  dfs[[i]]$scenario <- paste(price_declines[i])
+  }
+  saveRDS(dfs, file = paste0("model_output/",run_type,"/",run_name,".rds"))
+}
+```
+
+These plots demonstrate that a slower price decline....quick management response has a huge impact on total net benefits. The faster response scenario (time lag = 0) also translates into higher cumulative recruitment and harvest.
+
+The above price declines are assumed to be linear (non-stochastic) but we can introduce dynamic prices as we had before.
+
+The above price declines are built in as determinsitic trends. We can also include the dynamic price variability, as above using a CV = 0.1.
+
+```{r sim3b, echo=FALSE, warning=FALSE, message=FALSE, cache=TRUE}
+
+run_name = "price_decline_pricevar"
+price_declines = c(0, -0.001)
+
+for(run_type in c("odd","even")) {
+  dfs = list()
+  for(i in 1:length(price_declines)) {
+  
+  dfs[[i]] = sim(
+    sims = 1000,
+    time_steps = 100,
+    run = run_type,
+    deterministic_model = FALSE,
+    pr_12 = 0.118,
+    pr_21 = 0.202,
+    escapement_rule = "both",
+    harvest_CV = 0,
+    discount_rate = 0.1,
+    price_linear_change = price_declines[i],
+    price_acf = 0,
+    price_cv = 0.1,
+    time_lag = 0,
+    rec_std = 0.1,
+    seed = 123
+  )
+  dfs[[i]]$scenario <- paste(price_declines[i])
+  }
+  saveRDS(dfs, file = paste0("model_output/",run_type,"/",run_name,".rds"))
+}
+```
+
+Probability of transition
+
+```{r sim4, cache=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+
+# loop over different values of pr12
+pr_12_cng = c(0.0015, 0.118)
+run_name = "transprob"
+
+for(run_type in c("odd","even")) {
+  dfs = list()
+  for(i in 1:length(pr_12_cng)) {
+  
+  dfs[[i]] = sim(
+    sims = 1000,
+    time_steps = 100,
+    run = run_type,
+    deterministic_model = FALSE,
+    pr_12 = pr_12_cng[i],
+    pr_21 = 0.202,
+    escapement_rule = "both",
+    harvest_CV = 0,
+    discount_rate = 0.1,
+    price_linear_change = price_declines[i],
+    price_acf = 0,
+    price_cv = 0,
+    time_lag = 0,
+    rec_std = 0.1,
+    seed = 123
+  )
+  dfs[[i]]$scenario <- paste(price_declines[i])
+  }
+  saveRDS(dfs, file = paste0("model_output/",run_type,"/",run_name,".rds"))
+}
+
+```
+
+With recruitment CV
+
+```{r sim4b, cache=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+
+# loop over different values of pr12
+pr_12_cng = c(0.0015, 0.118)
+run_name = "transprob_pricevar"
+
+for(run_type in c("odd","even")) {
+  dfs = list()
+  for(i in 1:length(pr_12_cng)) {
+  
+  dfs[[i]] = sim(
+    sims = 1000,
+    time_steps = 100,
+    run = run_type,
+    deterministic_model = FALSE,
+    pr_12 = pr_12_cng[i],
+    pr_21 = 0.202,
+    escapement_rule = "both",
+    harvest_CV = 0,
+    discount_rate = 0.1,
+    price_linear_change = price_declines[i],
+    price_acf = 0,
+    price_cv = 0.1,
+    time_lag = 0,
+    rec_std = 0.1,
+    seed = 123
+  )
+  dfs[[i]]$scenario <- paste(price_declines[i])
+  }
+  saveRDS(dfs, file = paste0("model_output/",run_type,"/",run_name,".rds"))
+}
+```
