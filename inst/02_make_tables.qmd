@@ -104,7 +104,17 @@ summary = summary_all %>%
 
 test=rbind(summary) %>%
 group_by(scenario) %>%
-summarise(median_tot_ben = median(med_ben),median_ann_h=median(ann_harvest_50), mediam_ann_rec=median(ann_rec_50),median_ann_esc=median(ann_esc_50),mean_acum=mean(m_acnb))  
+summarise(median_tot_ben = median(med_ben),
+          median_ann_h=median(ann_harvest_50), 
+          mediam_ann_rec=median(ann_rec_50),
+          median_ann_esc=median(ann_esc_50),
+          mean_acum=mean(m_acnb),
+          mean_cv_ben=mean(cv_ben),
+          mean_cv_nb = mean(cv_nb),
+          mean_cv_ann_harvest = mean(cv_ann_harvest),
+          mean_cv_rec = mean(cv_rec),
+          mean_cv_est = mean(cv_esc)
+          )  
 
 tabl_harvest[[i]] <- test
 
