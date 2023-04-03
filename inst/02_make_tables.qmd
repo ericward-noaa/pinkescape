@@ -57,11 +57,13 @@ summary = summary_all %>%
                    hi75_nb = quantile(net_benefits, 0.75),
                    m_nb = mean(net_benefits[which(net_benefits > 0)]),
                    med_nb = median(net_benefits),
+                   cv_nb = sd(acum_ben) / mean(acum_ben),
                    zero_nb = length(which(net_benefits==0))/length(net_benefits),
                    lo25_ben = quantile(cum_ben, 0.25),
                    hi75_ben = quantile(cum_ben, 0.75),
                    m_ben = mean(cum_ben[which(cum_ben > 0)]),
                    med_ben = median(cum_ben),
+                   cv_ben = sd(cum_ben) / mean(cum_ben),
                    zero_ben = length(which(cum_ben==0))/length(cum_ben),
                    ann_ben_lo25 = quantile(discount_nb, 0.25),
                    ann_ben_hi75 = quantile(discount_nb, 0.75),
@@ -70,6 +72,7 @@ summary = summary_all %>%
                    zero_ann_ben = length(which(discount_nb==0))/length(discount_nb),
                    lo25_h = quantile(cum_harv, 0.25),
                    hi75_h = quantile(cum_harv, 0.75),
+                   cv_cum_harv = sd(cum_harv) / mean(cum_harv),
                    m_h = mean(cum_harv[which(cum_harv > 0)]),
                    zero_h = length(which(cum_harv==0))/length(cum_harv),
                    med_h = median(cum_harv),
@@ -80,6 +83,7 @@ summary = summary_all %>%
                    zero_ann_harvest = length(which(harvest==0))/length(harvest),
                    lo25_rec = quantile(cum_rec, 0.25),
                    hi75_rec = quantile(cum_rec, 0.75),
+                   cv_ann_harvest = sd(harvest)/mean(harvest),
                    m_rec = mean(cum_rec[which(cum_rec > 0)]),
                    zero_rec = length(which(cum_rec==0))/length(cum_rec),
                    med_rec = median(cum_rec),
@@ -87,13 +91,15 @@ summary = summary_all %>%
                    ann_rec_hi75 = quantile(rec, 0.75),
                    ann_rec_50 = quantile(rec, 0.5),
                    ann_rec_mean = mean(rec),
+                   cv_rec = sd(rec) / mean(rec),
                    zero_ann_rec = length(which(rec==0))/length(rec),
                    ann_esc= rec-harvest,
                    ann_esc_lo25 = quantile(ann_esc, 0.25),
                    ann_esc_hi75 = quantile(ann_esc, 0.75),
                    ann_esc_50 = quantile(ann_esc, 0.5),
                    ann_esc_mean=mean(ann_esc[which(ann_esc > 0)]),
-                   zero_esc = length(which(ann_esc==0))/length(ann_esc)
+                   zero_esc = length(which(ann_esc==0))/length(ann_esc),
+                   cv_esc = sd(est) / mean(esc)
                    )
 
 test=rbind(summary) %>%
@@ -130,9 +136,10 @@ kable_paper("hover", full_width = F))
 
 ```
 
+```{=tex}
 \break
 \break
-
+```
 ```{r results='asis', echo = FALSE}
 
 scenarios$run_name <- gsub("_", " ", scenarios$run_name)    # remove
@@ -147,9 +154,10 @@ kable_paper("hover", full_width = F))
 
 ```
 
+```{=tex}
 \break
 \break
-
+```
 ```{r results='asis', echo = FALSE}
 
 scenarios$run_name <- gsub("_", " ", scenarios$run_name)    # remove
@@ -164,9 +172,10 @@ kable_paper("hover", full_width = F))
 
 ```
 
+```{=tex}
 \break
 \break
-
+```
 ```{r results='asis', echo = FALSE}
 
 scenarios$run_name <- gsub("_", " ", scenarios$run_name)    # remove
