@@ -115,6 +115,7 @@ sim <- function(sims = 1000, # number of simulations
         }
         o <- optimize(func, lower = 0.001, upper = 20, maximum = FALSE)
         harvest = 0
+        optimal_escapement = o$minimum
         if(1 > time_lag) harvest = max(rec - o$minimum, 0) # use numerical solution
       } else {
         func = function(S) {
@@ -136,6 +137,7 @@ sim <- function(sims = 1000, # number of simulations
         }
         o <- optimize(func, lower = 0.001, upper = 20, maximum = FALSE)
         harvest = 0
+        optimal_escapement = o$minimum
         if(1 > time_lag) harvest = max(rec - o$minimum, 0) # use numerical solution
       }
     } else {
@@ -149,6 +151,7 @@ sim <- function(sims = 1000, # number of simulations
           }
           o <- optimize(func, lower = 0.001, upper = 20, maximum = FALSE)
           harvest = 0
+          optimal_escapement = o$minimum
           if(1 > time_lag) harvest = max(rec - o$minimum, 0) # use numerical solution
         } else {
           func = function(S) {
@@ -166,6 +169,7 @@ sim <- function(sims = 1000, # number of simulations
           }
           o <- optimize(func, lower = 0.001, upper = 20, maximum = FALSE)
           harvest = 0
+          optimal_escapement = o$minimum
           if(1 > time_lag) harvest = max(rec - o$minimum, 0) # use numerical solution
         }
       }
@@ -201,6 +205,7 @@ sim <- function(sims = 1000, # number of simulations
             o <- optimize(func, lower = 0.001, upper = 20, maximum = FALSE)
           }
           harvest[t] = 0
+          optimal_escapement[t] = o$minimum
           if(t > time_lag) harvest[t] = max(rec[t] - o$minimum, 0) # use numerical solution
         } else {
           if(t > time_lag) {
@@ -216,6 +221,7 @@ sim <- function(sims = 1000, # number of simulations
             o <- optimize(func, lower = 0.001, upper = 20, maximum = FALSE)
           }
           harvest[t] = 0
+          optimal_escapement[t] = o$minimum
           if(t > time_lag) harvest[t] = max(rec[t] - o$minimum, 0) # use numerical solution
         }
       } else {
@@ -230,6 +236,7 @@ sim <- function(sims = 1000, # number of simulations
               o <- optimize(func, lower = 0.001, upper = 20, maximum = FALSE)
             }
             harvest[t] = 0
+            optimal_escapement[t] = o$minimum
             if(t > time_lag) harvest[t] = max(rec[t] - o$minimum, 0) # use numerical solution
           } else {
             if(t > time_lag) {
@@ -240,12 +247,14 @@ sim <- function(sims = 1000, # number of simulations
               o <- optimize(func, lower = 0.001, upper = 20, maximum = FALSE)
             }
             harvest[t] = 0
+            optimal_escapement[t] = o$minimum
             if(t > time_lag) harvest[t] = max(rec[t] - o$minimum, 0) # use numerical solution
           }
         }
         if(msy_scenario == "equilibrium") {
           # add optional time lag, defaults to 0
           harvest[t] <- 0
+          optimal_escapement[t] = ricker_pars$S_star[x[t - time_lag]]
           if(t > time_lag) harvest[t] <- max(rec[t] - ricker_pars$S_star[x[t - time_lag]], 0)
         }
       }
@@ -276,6 +285,7 @@ sim <- function(sims = 1000, # number of simulations
                     rec_dev = rec_dev,
                     harvest = harvest,
                     net_benefits = net_benefits,
+                    optimal_escapement = optimal_escapement,
                     sim = s,
                     price_per_million = prices,
                     discount = discount)
