@@ -300,3 +300,38 @@ for(run_type in c("odd","even")) {
   saveRDS(dfs, file = paste0("model_output/",run_type,"/",run_name,".rds"))
 }
 ```
+
+\break
+
+## Harvest CV
+
+This is meant to simulate imperfect harvest (above / below realized optimum)
+
+```{r sim5, cache=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+
+run_name = "harvest_CV"
+harvest_cv = c(0, 0.1, 0.2)
+
+for(run_type in c("odd","even")) {
+  dfs = list()
+  for(i in 1:length(harvest_cv)) {
+  
+  dfs[[i]] = sim(
+    sims = 1000,
+    time_steps = 100,
+    run = run_type,
+    deterministic_model = FALSE,
+    pr_12 = 0.118,
+    pr_21 = 0.202,
+    escapement_rule = "both",
+    harvest_CV = 0,
+    discount_rate = 0.1,
+    harvest_CV = harvest_cv[i],
+    rec_std = 0.1,
+    seed = 123
+  )
+  dfs[[i]]$scenario <- paste(harvest_cv[i])
+  }
+  saveRDS(dfs, file = paste0("model_output/",run_type,"/",run_name,".rds"))
+}
+```
