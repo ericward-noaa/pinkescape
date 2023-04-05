@@ -27,6 +27,9 @@ scenarios = expand.grid(run_name = c("rec_sd",
              "transprob",
              "transprob_pricevar"),
              run_type = c("odd","even"))
+
+scenarios$label <- scenarios$run_name # change me
+
 tabl_harvest = NULL
 tabl_benrec = NULL
 
@@ -102,7 +105,7 @@ g0ac <- summary_all %>%
   dplyr::filter(t == max(summary_all$t)) %>%
   ggplot(aes(scenario, acum_ben)) + 
     geom_boxplot(outlier.colour = NA) + 
-  xlab("Recruitment sd") + 
+  xlab(scenarios$label[i]) + 
   ylab("Levelized net benefits, $M") +
   theme(aspect.ratio=1/1)+
   ylim(NA, 100) 
@@ -113,7 +116,7 @@ g0a <- summary_all %>%
   dplyr::filter(t == max(summary_all$t)) %>%
   ggplot(aes(scenario, cum_ben)) + 
     geom_boxplot(outlier.colour = NA) + 
-  xlab("Recruitment sd") + 
+  xlab(scenarios$label[i]) + 
   ylab("Cumulative net benefits, $M") +
   theme(aspect.ratio=1/1)+
   ylim(NA, 500) 
@@ -124,7 +127,7 @@ g0c <- summary_all %>%
   dplyr::filter(t == max(summary_all$t)) %>%
   ggplot(aes(scenario, cum_harv)) + 
     geom_boxplot(outlier.colour = NA) + 
-  xlab("Recruitment sd") + 
+  xlab(scenarios$label[i]) + 
   ylab("Cumulative harvests")+
   theme(aspect.ratio=1/1) +
   ylim(NA, 1250)
@@ -135,7 +138,7 @@ g0d <- summary_all %>%
   dplyr::filter(t == max(summary_all$t)) %>%
   ggplot(aes(scenario, cum_rec)) + 
     geom_boxplot(outlier.colour = NA) + 
-  xlab("Recruitment sd") + 
+  xlab(scenarios$label[i]) + 
   ylab("Cumulative recruitment")+
   theme(aspect.ratio=1/1) +
   ylim(NA, 2500)
@@ -149,8 +152,8 @@ g0b <- ggplot(summary, aes(t, zero_ann_harvest, col = scenario, fill = scenario)
   xlab("Time") + 
   scale_color_viridis_d(end=0.4) + 
   scale_fill_viridis_d(end=0.4) + 
-  guides(fill=guide_legend(title="Recruitment sd"),
-         col=guide_legend(title="Recruitment sd"))+
+  guides(fill=guide_legend(title=scenarios$label[i]),
+         col=guide_legend(title=scenarios$label[i]))+
   theme(aspect.ratio=1/1)
 g0b1<-g0b + theme(legend.position="top")
 print(g0b1)
@@ -164,8 +167,8 @@ g0bh <- ggplot(summary, aes(t, ann_harvest_mean, col = scenario, fill = scenario
   scale_color_viridis_d(end=0.4) + 
   scale_fill_viridis_d(end=0.4) +
   ylim(0,NA)+ 
-  guides(fill=guide_legend(title="Recruitment sd"),
-         col=guide_legend(title="Recruitment sd"))+
+  guides(fill=guide_legend(title=scenarios$label[i]),
+         col=guide_legend(title=scenarios$label[i]))+
   theme(aspect.ratio=1/1)
 g0bh1<-g0bh + theme(legend.position="top")
 print(g0bh1)
@@ -174,13 +177,13 @@ print(g0bh1)
 g0br <- ggplot(summary, aes(t, ann_rec_mean, col = scenario, fill = scenario)) +
   #geom_ribbon(aes(ymin=lo25_ben, ymax=hi75_ben), alpha=0.5, col=NA) +
   geom_line() +
-  ylab("Mean annual recruitment") + 
+  ylab(scenarios$label[i]) + 
   xlab("Time") + 
   scale_color_viridis_d(end=0.4) + 
   scale_fill_viridis_d(end=0.4) +
   ylim(0,NA)+ 
-  guides(fill=guide_legend(title="Recruitment sd"),
-         col=guide_legend(title="Recruitment sd"))+
+  guides(fill=guide_legend(title=scenarios$label[i]),
+         col=guide_legend(title=scenarios$label[i]))+
   theme(aspect.ratio=1/1)
 g0br1<-g0br + theme(legend.position="top")
 print(g0br1)
@@ -193,8 +196,8 @@ g0bnb <- ggplot(summary, aes(t, m_nb/1000000, col = scenario, fill = scenario)) 
   xlab("Time") + 
   scale_color_viridis_d(end=0.4) + 
   scale_fill_viridis_d(end=0.4) + 
-  guides(fill=guide_legend(title="Recruitment sd"),
-         col=guide_legend(title="Recruitment sd"))+
+  guides(fill=guide_legend(title=scenarios$label[i]),
+         col=guide_legend(title=scenarios$label[i]))+
   theme(aspect.ratio=1/1)
 g0bnb1<-g0bnb + theme(legend.position="top")
 print(g0bnb1)
@@ -207,8 +210,8 @@ g1 <- ggplot(summary, aes(t, med_ben, col = scenario, fill = scenario)) +
   xlab("Time") + 
   scale_color_viridis_d(end=0.4) + 
   scale_fill_viridis_d(end=0.4) + 
-  guides(fill=guide_legend(title="Recruitment sd"),
-         col=guide_legend(title="Recruitment sd"))
+  guides(fill=guide_legend(title=scenarios$label[i]),
+         col=guide_legend(title=scenarios$label[i]))
 
 g2 <- ggplot(summary, aes(t, med_h, col = scenario, fill = scenario)) + 
   geom_ribbon(aes(ymin=lo25_h, ymax=hi75_h), alpha=0.5, col=NA) + 
@@ -217,8 +220,8 @@ g2 <- ggplot(summary, aes(t, med_h, col = scenario, fill = scenario)) +
   xlab("Time") + 
   scale_color_viridis_d(end=0.4) + 
   scale_fill_viridis_d(end=0.4) + 
-  guides(fill=guide_legend(title="Recruitment sd"),
-         col=guide_legend(title="Recruitment sd"))
+  guides(fill=guide_legend(title=scenarios$label[i]),
+         col=guide_legend(title=scenarios$label[i]))
 
 g3 <- ggplot(summary, aes(t, med_rec, col = scenario, fill = scenario)) + 
   geom_ribbon(aes(ymin=lo25_rec, ymax=hi75_rec), alpha=0.5, col=NA) + 
@@ -227,8 +230,8 @@ g3 <- ggplot(summary, aes(t, med_rec, col = scenario, fill = scenario)) +
   xlab("Time") + 
   scale_color_viridis_d(end=0.4) + 
   scale_fill_viridis_d(end=0.4) + 
-  guides(fill=guide_legend(title="Recruitment sd"),
-         col=guide_legend(title="Recruitment sd"))
+  guides(fill=guide_legend(title=scenarios$label[i]),
+         col=guide_legend(title=scenarios$label[i]))
 
 g4 <- ggplot(summary, aes(t, m_acnb, col = scenario, fill = scenario)) + 
   geom_ribbon(aes(ymin=lo25_acnb, ymax=hi75_acnb), alpha=0.5, col=NA) + 
@@ -237,8 +240,8 @@ g4 <- ggplot(summary, aes(t, m_acnb, col = scenario, fill = scenario)) +
   xlab("Time") + 
   scale_color_viridis_d(end=0.4) + 
   scale_fill_viridis_d(end=0.4) + 
-  guides(fill=guide_legend(title="Recruitment sd"),
-         col=guide_legend(title="Recruitment sd")) 
+  guides(fill=guide_legend(title=scenarios$label[i]),
+         col=guide_legend(title=scenarios$label[i])) 
 
 print(g4)
 #ggsave("g4ac_recCV.pdf", width = 6, height = 4)
@@ -250,8 +253,8 @@ g5 <- ggplot(summary, aes(t, ann_harvest_mean, col = scenario, fill = scenario))
   xlab("Time") + 
   scale_color_viridis_d(end=0.4) + 
   scale_fill_viridis_d(end=0.4) + 
-  guides(fill=guide_legend(title="Recruitment sd"),
-         col=guide_legend(title="Recruitment sd"))
+  guides(fill=guide_legend(title=scenarios$label[i]),
+         col=guide_legend(title=scenarios$label[i]))
 
 print(g5)
 #ggsave("g4ah_recCV.pdf", width = 6, height = 4)
@@ -263,8 +266,8 @@ g6 <- ggplot(summary, aes(t, ann_rec_50, col = scenario, fill = scenario)) +
   xlab("Time") + 
   scale_color_viridis_d(end=0.4) + 
   scale_fill_viridis_d(end=0.4) + 
-  guides(fill=guide_legend(title="Recruitment sd"),
-         col=guide_legend(title="Recruitment sd")) 
+  guides(fill=guide_legend(title=scenarios$label[i]),
+         col=guide_legend(title=scenarios$label[i])) 
 
 g7 <- ggplot(summary, aes(t, ann_esc_50, col = scenario, fill = scenario)) + 
   geom_ribbon(aes(ymin=ann_esc_lo25, ymax=ann_esc_hi75), alpha=0.5, col=NA) + 
@@ -273,8 +276,8 @@ g7 <- ggplot(summary, aes(t, ann_esc_50, col = scenario, fill = scenario)) +
   xlab("Time") + 
   scale_color_viridis_d(end=0.4) + 
   scale_fill_viridis_d(end=0.4) + 
-  guides(fill=guide_legend(title="Recruitment sd"),
-         col=guide_legend(title="Recruitment sd")) 
+  guides(fill=guide_legend(title=scenarios$label[i]),
+         col=guide_legend(title=scenarios$label[i])) 
 g8 <- ggplot(summary, aes(t, med_nb, col = scenario, fill = scenario)) + 
   geom_ribbon(aes(ymin=lo25_nb, ymax=hi75_nb), alpha=0.5, col=NA) + 
   geom_line(aes(t,med_nb)) +
@@ -282,8 +285,8 @@ g8 <- ggplot(summary, aes(t, med_nb, col = scenario, fill = scenario)) +
   xlab("Time") + 
   scale_color_viridis_d(end=0.4) + 
   scale_fill_viridis_d(end=0.4) + 
-  guides(fill=guide_legend(title="Recruitment sd"),
-         col=guide_legend(title="Recruitment sd")) 
+  guides(fill=guide_legend(title=scenarios$label[i]),
+         col=guide_legend(title=scenarios$label[i])) 
 
 g88 <- g8 + theme(axis.title.x = element_text(face="bold", colour="black", size=60),
            axis.text.x  = element_text(angle=0, vjust=0.5, size=56),
