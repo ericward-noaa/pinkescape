@@ -99,7 +99,7 @@ summary = summary_all %>%
                    ann_esc_50 = quantile(ann_esc, 0.5),
                    ann_esc_mean=mean(ann_esc[which(ann_esc > 0)]),
                    zero_esc = length(which(ann_esc==0))/length(ann_esc),
-                   cv_esc = sd(est) / mean(esc)
+                   cv_esc = sd(ann_esc) / mean(ann_esc)
                    )
 
 test=rbind(summary) %>%

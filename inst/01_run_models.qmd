@@ -324,7 +324,6 @@ for(run_type in c("odd","even")) {
     pr_12 = 0.118,
     pr_21 = 0.202,
     escapement_rule = "both",
-    harvest_CV = 0,
     discount_rate = 0.1,
     harvest_CV = harvest_cv[i],
     rec_std = 0.1,
