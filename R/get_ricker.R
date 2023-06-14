@@ -12,7 +12,7 @@ get_ricker = function() {
                             "S0" = c(3.962855, 3.962855, 3.675333,3.675333), # escapement in 2018-19
                             "S_star"=c(6.14274,14.8476,6.17917,2.59796), # escapement rule
                             "real_price" = c(2099586.443,2099586.443,2132653.372,2132653.372), # price in USD per million fish
-                            "cst_param_calib"=c(2132653.372,2132653.372,9435607.205,9435607.205), # based on million fish
+                            "cst_param_calib"=c(13140389.91,13140389.91,9435607.205,9435607.205), # based on million fish
                             "S_star_deterministic" = c(6.59548, 12.9706, 5.63686, 2.74081))
   return(ricker_pars)
 }
