@@ -50,7 +50,7 @@ sim <- function(sims = 1000, # number of simulations
     ricker_pars <- get_ricker()
   }
   if(deterministic_model == FALSE) {
-    ricker_pars$S_star = ricker_pars$S_star_deterministic
+    ricker_pars$S_star = ricker_pars$S_star_stochastic
   }
   ricker_pars = ricker_pars[which(ricker_pars$run == run),]
 
