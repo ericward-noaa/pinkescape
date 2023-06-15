@@ -45,7 +45,15 @@ for(i in 1:nrow(scenarios)) {
     dplyr::mutate(cum_ben = cumsum(discount_nb),
                   acum_ben = cumsum(discount_nb)*(.1/(1-(1+.1)^(-100))),
                   cum_harv = cumsum(harvest),
-                  cum_rec = cumsum(rec))
+                  cum_rec = cumsum(rec)
+                  )
+  
+    zeros = dplyr::group_by(df, sim, scenario) %>% 
+    dplyr::summarize(n_zeros = length(which(harvest==0))) %>%
+      dplyr::group_by(scenario) %>%
+      dplyr::summarize(mean_zero = mean(n_zeros),
+                       lower_25 = quantile(n_zeros,0.25),
+                       upper_75 = quantile(n_zeros,0.75))
 # this is separated so that summary_all can be used below
 summary = summary_all %>%
   dplyr::group_by(t, scenario) %>% 
@@ -115,7 +123,7 @@ summarise(median_tot_ben = median(med_ben),
           mean_cv_rec = mean(cv_rec),
           mean_cv_est = mean(cv_esc)
           )  
-
+test <- dplyr::left_join(test, zeros)
 tabl_harvest[[i]] <- test
 
 test=rbind(summary) %>%

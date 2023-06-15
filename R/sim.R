@@ -173,7 +173,10 @@ sim <- function(sims = 1000, # number of simulations
           if(1 > time_lag) harvest = max(rec - o$minimum, 0) # use numerical solution
         }
       }
-      if(msy_scenario == "equilibrium") harvest = max(rec - ricker_pars$S_star[x[1]], 0)
+      if(msy_scenario == "equilibrium") {
+        harvest = max(rec - ricker_pars$S_star[x[1]], 0)
+        optimal_escapement = ricker_pars$S_star[x[1]]
+      }
     }
 
     net_benefits = 0 # needs to be updated
