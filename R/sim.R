@@ -257,8 +257,11 @@ sim <- function(sims = 1000, # number of simulations
         if(msy_scenario == "equilibrium") {
           # add optional time lag, defaults to 0
           harvest[t] <- 0
-          optimal_escapement[t] = ricker_pars$S_star[x[t - time_lag]]
-          if(t > time_lag) harvest[t] <- max(rec[t] - ricker_pars$S_star[x[t - time_lag]], 0)
+
+          if(t > time_lag) {
+            harvest[t] <- max(rec[t] - ricker_pars$S_star[x[t - time_lag]], 0)
+            optimal_escapement[t] = ricker_pars$S_star[x[t - time_lag]]
+          }
         }
       }
 
