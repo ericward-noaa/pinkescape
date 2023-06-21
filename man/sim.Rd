@@ -22,6 +22,7 @@ sim(
   price_cv = 0,
   time_lag = 0,
   msy_scenario = c("equilibrium", "msy")[1],
+  alpha = 0,
   seed = 123
 )
 }
@@ -62,6 +63,8 @@ escapement rule is used}
 
 \item{msy_scenario}{Scenario for maximum sustainable yield (MSY). Defaults to "equilibrium" where values are constant regardless of spawner abundance. Can
 also be "msy", where values are updated each year}
+
+\item{alpha}{The objective function to solve for with the MSY derivative. Defaults to 0}
 
 \item{seed}{Seed for random number generation, defaults to 123}
 }

@@ -19,6 +19,7 @@
 #' @param price_cv The coefficient of variation, or standard deviation in log space of prices. Defaults to 0 (realistic values based on time series of pink salmon prices in Prince William Sound, 1984 - 2021 = 0.1)
 #' @param msy_scenario Scenario for maximum sustainable yield (MSY). Defaults to "equilibrium" where values are constant regardless of spawner abundance. Can
 #'also be "msy", where values are updated each year
+#' @param alpha The objective function to solve for with the MSY derivative. Defaults to 0
 #' @param seed Seed for random number generation, defaults to 123
 #' @return data frame of simulations
 #'
@@ -44,6 +45,7 @@ sim <- function(sims = 1000, # number of simulations
                 price_cv = 0, # default based on PWS pink salmon 1984 - 2021
                 time_lag = 0,
                 msy_scenario = c("equilibrium","msy")[1],
+                alpha = 0,
                 seed = 123) {
 
   if(is.null(ricker_pars)) {
@@ -146,7 +148,7 @@ sim <- function(sims = 1000, # number of simulations
           func = function(S) {
             bS = ricker_pars$b[x[1]]*S
             abS = ricker_pars$a[x[1]] + bS
-            obj <- (1 + bS) * exp(abS)
+            obj <- (alpha - (1 + bS) * exp(abS))^2
             return(obj)
           }
           o <- optimize(func, lower = 0.001, upper = 20, maximum = FALSE)
@@ -161,9 +163,9 @@ sim <- function(sims = 1000, # number of simulations
             eab[1] <- exp(ricker_pars$a[1] + bS[1])
             eab[2] <- exp(ricker_pars$a[2] + bS[2])
             if(x[1] == 1) {
-              obj <- (1 + bS[1]) * eab[1]
+              obj <- (alpha - (1 + bS[1]) * eab[1])^2
             } else {
-              obj <- (1 + bS[2]) * eab[2]
+              obj <- (alpha - (1 + bS[2]) * eab[2])^2
             }
             return(obj)
           }
@@ -233,7 +235,7 @@ sim <- function(sims = 1000, # number of simulations
           if(deterministic_model == TRUE) {
             if(t > time_lag) {
               func = function(S) {
-                obj <- (1 + ricker_pars$b[x[t - time_lag]]*S) * exp(ricker_pars$a[x[t - time_lag]] + ricker_pars$b[x[t - time_lag]]*S)
+                obj <- (alpha - (1 + ricker_pars$b[x[t - time_lag]]*S) * exp(ricker_pars$a[x[t - time_lag]] + ricker_pars$b[x[t - time_lag]]*S))^2
                 return(obj)
               }
               o <- optimize(func, lower = 0.001, upper = 20, maximum = FALSE)
@@ -244,7 +246,7 @@ sim <- function(sims = 1000, # number of simulations
           } else {
             if(t > time_lag) {
               func = function(S) {
-                obj <- (1 + ricker_pars$b[x[t - time_lag]]*S) * exp(ricker_pars$a[x[t - time_lag]] + ricker_pars$b[x[t - time_lag]]*S)
+                obj <- (alpha - (1 + ricker_pars$b[x[t - time_lag]]*S) * exp(ricker_pars$a[x[t - time_lag]] + ricker_pars$b[x[t - time_lag]]*S))^2
                 return(obj)
               }
               o <- optimize(func, lower = 0.001, upper = 20, maximum = FALSE)
