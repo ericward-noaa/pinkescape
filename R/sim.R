@@ -185,7 +185,7 @@ sim <- function(sims = 1000, # number of simulations
 
     for(t in 2:time_steps) {
       x[t] = sample(1:2, size=1, prob = m[x[t-1],]) # simulate regime
-      spawners[t] <- rec[t-1] - harvest[t-1]
+      spawners[t] <- max(rec[t-1] - harvest[t-1], 0)
 
       rec[t] <- spawners[t] * exp(ricker_pars$a[x[t]] + spawners[t]*ricker_pars$b[x[t]]) * exp(rec_dev[t] - 0.5*rec_std^2)
 
