@@ -24,6 +24,7 @@
 #' @return data frame of simulations
 #'
 #' @importFrom stats rnorm optimize
+#' @importFrom gsl lambert_W0
 #' @export
 #'
 # bring up with group on next call: order of harvest v recruitment
