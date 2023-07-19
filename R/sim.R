@@ -19,7 +19,6 @@
 #' @param price_cv The coefficient of variation, or standard deviation in log space of prices. Defaults to 0 (realistic values based on time series of pink salmon prices in Prince William Sound, 1984 - 2021 = 0.1)
 #' @param msy_scenario Scenario for maximum sustainable yield (MSY). Defaults to "equilibrium" where values are constant regardless of spawner abundance. Can
 #'also be "msy", where values are updated each year
-#' @param alpha The objective function to solve for with the MSY derivative. Defaults to 0
 #' @param seed Seed for random number generation, defaults to 123
 #' @return data frame of simulations
 #'
@@ -46,7 +45,6 @@ sim <- function(sims = 1000, # number of simulations
                 price_cv = 0, # default based on PWS pink salmon 1984 - 2021
                 time_lag = 0,
                 msy_scenario = NULL,
-                alpha = 0,
                 seed = 123) {
 
   if(is.null(ricker_pars)) {
