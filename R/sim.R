@@ -144,36 +144,11 @@ sim <- function(sims = 1000, # number of simulations
       }
     } else {
       if(msy_scenario == "msy") {
-        if(deterministic_model == TRUE) {
-          func = function(S) {
-            bS = ricker_pars$b[x[1]]*S
-            abS = ricker_pars$a[x[1]] + bS
-            obj <- (alpha - (1 + bS) * exp(abS))^2
-            return(obj)
-          }
-          o <- optimize(func, lower = 0.001, upper = 20, maximum = FALSE)
-          harvest = 0
-          optimal_escapement = o$minimum
-          if(1 > time_lag) harvest = max(rec - o$minimum, 0) # use numerical solution
-        } else {
-          func = function(S) {
-            bS <- eab <- tot <- rep(0,2)
-            bS[1] <- ricker_pars$b[1]*S
-            bS[2] <- ricker_pars$b[2]*S
-            eab[1] <- exp(ricker_pars$a[1] + bS[1])
-            eab[2] <- exp(ricker_pars$a[2] + bS[2])
-            if(x[1] == 1) {
-              obj <- (alpha - (1 + bS[1]) * eab[1])^2
-            } else {
-              obj <- (alpha - (1 + bS[2]) * eab[2])^2
-            }
-            return(obj)
-          }
-          o <- optimize(func, lower = 0.001, upper = 20, maximum = FALSE)
-          harvest = 0
-          optimal_escapement = o$minimum
-          if(1 > time_lag) harvest = max(rec - o$minimum, 0) # use numerical solution
-        }
+        # same for both deterministic / stochastic
+        harvest = 0
+        Smsy = -(1 - lambert_W0(exp(1 - ricker_pars$a[x[1]]))) / ricker_pars$b[x[1]] # https://peerj.com/articles/1623/
+        optimal_escapement = Smsy
+        if(1 > time_lag) harvest = max(rec - Smsy, 0)
       }
       if(msy_scenario == "equilibrium") {
         harvest = max(rec - ricker_pars$S_star[x[1]], 0)
@@ -230,36 +205,18 @@ sim <- function(sims = 1000, # number of simulations
           if(t > time_lag) harvest[t] = max(rec[t] - o$minimum, 0) # use numerical solution
         }
       } else {
-
         if(msy_scenario == "msy") {
-          if(deterministic_model == TRUE) {
-            if(t > time_lag) {
-              func = function(S) {
-                obj <- (alpha - (1 + ricker_pars$b[x[t - time_lag]]*S) * exp(ricker_pars$a[x[t - time_lag]] + ricker_pars$b[x[t - time_lag]]*S))^2
-                return(obj)
-              }
-              o <- optimize(func, lower = 0.001, upper = 20, maximum = FALSE)
-            }
-            harvest[t] = 0
-            optimal_escapement[t] = o$minimum
-            if(t > time_lag) harvest[t] = max(rec[t] - o$minimum, 0) # use numerical solution
-          } else {
-            if(t > time_lag) {
-              func = function(S) {
-                obj <- (alpha - (1 + ricker_pars$b[x[t - time_lag]]*S) * exp(ricker_pars$a[x[t - time_lag]] + ricker_pars$b[x[t - time_lag]]*S))^2
-                return(obj)
-              }
-              o <- optimize(func, lower = 0.001, upper = 20, maximum = FALSE)
-            }
-            harvest[t] = 0
-            optimal_escapement[t] = o$minimum
-            if(t > time_lag) harvest[t] = max(rec[t] - o$minimum, 0) # use numerical solution
+          harvest[t] = 0
+          if(t > time_lag) {
+            Smsy = -(1 - lambert_W0(exp(1 - ricker_pars$a[x[t - time_lag]]))) / ricker_pars$b[x[t - time_lag]] # https://peerj.com/articles/1623/
+            if(1 > time_lag) harvest = max(rec - Smsy, 0)
+            optimal_escapement[t] = Smsy
+            if(t > time_lag) harvest[t] = max(rec[t] - Smsy, 0)
           }
         }
         if(msy_scenario == "equilibrium") {
           # add optional time lag, defaults to 0
           harvest[t] <- 0
-
           if(t > time_lag) {
             harvest[t] <- max(rec[t] - ricker_pars$S_star[x[t - time_lag]], 0)
             optimal_escapement[t] = ricker_pars$S_star[x[t - time_lag]]
