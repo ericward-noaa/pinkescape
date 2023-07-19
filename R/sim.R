@@ -45,7 +45,7 @@ sim <- function(sims = 1000, # number of simulations
                 price_acf = 0.7, # default based on PWS pink salmon 1984 - 2021
                 price_cv = 0, # default based on PWS pink salmon 1984 - 2021
                 time_lag = 0,
-                msy_scenario = c("equilibrium","msy")[1],
+                msy_scenario = NULL,
                 alpha = 0,
                 seed = 123) {
 
@@ -56,6 +56,8 @@ sim <- function(sims = 1000, # number of simulations
     ricker_pars$S_star = ricker_pars$S_star_stochastic
   }
   ricker_pars = ricker_pars[which(ricker_pars$run == run),]
+
+  if(is.null(msy_scenario)) msy_scenario = c("equilibrium","msy")[1]
 
   # add fixed escapement rules here
   if(escapement_rule == "pre") ricker_pars$S_star[2] = ricker_pars$S_star[1]
