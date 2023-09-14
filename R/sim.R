@@ -226,7 +226,11 @@ sim <- function(sims = 1000, # number of simulations
       }
 
       # add in harvest variability
-      if(harvest_CV > 0) harvest[t] <- harvest[t] * exp(rnorm(1,mean=0,sd=harvest_CV) - harvest_CV*harvest_CV/2.0)
+      if(harvest_CV > 0) {
+        harvest[t] <- harvest[t] * exp(rnorm(1,mean=0,sd=harvest_CV) - harvest_CV*harvest_CV/2.0)
+        if(harvest[t] > rec[t] - optimal_escapement[t]) harvest[t] <- rec[t] - optimal_escapement[t]
+      }
+
 
       # add optional time lag, defaults to 0
       net_benefits[t] <- 0
