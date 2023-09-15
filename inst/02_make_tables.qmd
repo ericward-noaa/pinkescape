@@ -25,7 +25,9 @@ scenarios = expand.grid(run_name = c("rec_sd",
              "price_decline",
              "price_decline_pricevar",
              "transprob",
-             "transprob_pricevar"),
+             "transprob_pricevar",
+             "harvest_CV",
+             "harvest_CV_pricevar"),
              run_type = c("odd","even"))
 tabl_harvest = list()
 tabl_benrec = list()
@@ -49,9 +51,12 @@ for(i in 1:nrow(scenarios)) {
                   )
   
     zeros = dplyr::group_by(df, sim, scenario) %>% 
-    dplyr::summarize(n_zeros = length(which(harvest==0))) %>%
+    dplyr::summarize(n_zeros = length(which(harvest==0)),
+                     pr_n_zeros=length(which(harvest==0))/length(harvest)) %>%
       dplyr::group_by(scenario) %>%
       dplyr::summarize(mean_zero = mean(n_zeros),
+                       mean_pr_zero=mean(pr_n_zeros),
+                       cv_zero = sd(n_zeros) / mean(n_zeros),
                        lower_25 = quantile(n_zeros,0.25),
                        upper_75 = quantile(n_zeros,0.75))
 # this is separated so that summary_all can be used below
@@ -61,15 +66,16 @@ summary = summary_all %>%
                    hi75_acnb = quantile(acum_ben, 0.75),
                    m_acnb = mean(acum_ben),
                    med_acnb = median(acum_ben),
+                   cv_acnb = sd(acum_ben) / mean(acum_ben),
                    lo25_nb = quantile(net_benefits, 0.25),
                    hi75_nb = quantile(net_benefits, 0.75),
-                   m_nb = mean(net_benefits[which(net_benefits > 0)]),
+                   m_nb = mean(net_benefits),
                    med_nb = median(net_benefits),
-                   cv_nb = sd(acum_ben) / mean(acum_ben),
+                   cv_nb = sd(net_benefits) / mean(net_benefits),
                    zero_nb = length(which(net_benefits==0))/length(net_benefits),
                    lo25_ben = quantile(cum_ben, 0.25),
                    hi75_ben = quantile(cum_ben, 0.75),
-                   m_ben = mean(cum_ben[which(cum_ben > 0)]),
+                   m_ben = mean(cum_ben),
                    med_ben = median(cum_ben),
                    cv_ben = sd(cum_ben) / mean(cum_ben),
                    zero_ben = length(which(cum_ben==0))/length(cum_ben),
@@ -78,23 +84,28 @@ summary = summary_all %>%
                    ann_ben_50 = quantile(discount_nb, 0.5),
                    ann_ben_mean = mean(discount_nb[which(discount_nb > 0)]),
                    zero_ann_ben = length(which(discount_nb==0))/length(discount_nb),
+                   cv_ann_ben = sd(discount_nb) / mean(discount_nb),
                    lo25_h = quantile(cum_harv, 0.25),
                    hi75_h = quantile(cum_harv, 0.75),
                    cv_cum_harv = sd(cum_harv) / mean(cum_harv),
-                   m_h = mean(cum_harv[which(cum_harv > 0)]),
+                   m_h = mean(cum_harv),
+                   m_h_g = mean(cum_harv[which(cum_harv > 0)]),
                    zero_h = length(which(cum_harv==0))/length(cum_harv),
                    med_h = median(cum_harv),
                    ann_harvest_lo25 = quantile(harvest[which(harvest > 0)], 0.25),
                    ann_harvest_hi75 = quantile(harvest[which(harvest > 0)], 0.75),
                    ann_harvest_50 = quantile(harvest[which(harvest > 0)], 0.5),
-                   ann_harvest_mean = mean(harvest[which(harvest > 0)]),
+                   ann_harvest_mean = mean(harvest),
+                   ann_harvest_mean_g = mean(harvest[which(harvest > 0)]),
                    zero_ann_harvest = length(which(harvest==0))/length(harvest),
                    lo25_rec = quantile(cum_rec, 0.25),
                    hi75_rec = quantile(cum_rec, 0.75),
                    cv_ann_harvest = sd(harvest)/mean(harvest),
-                   m_rec = mean(cum_rec[which(cum_rec > 0)]),
-                   zero_rec = length(which(cum_rec==0))/length(cum_rec),
-                   med_rec = median(cum_rec),
+                   m_crec = mean(cum_rec),
+                   m_crec_g = mean(cum_rec[which(cum_rec > 0)]),
+                   zero_crec = length(which(cum_rec==0))/length(cum_rec),
+                   med_crec = median(cum_rec),
+                   cv_crec = sd(cum_rec) / mean(cum_rec),
                    ann_rec_lo25 = quantile(rec, 0.25),
                    ann_rec_hi75 = quantile(rec, 0.75),
                    ann_rec_50 = quantile(rec, 0.5),
@@ -102,26 +113,33 @@ summary = summary_all %>%
                    cv_rec = sd(rec) / mean(rec),
                    zero_ann_rec = length(which(rec==0))/length(rec),
                    ann_esc= rec-harvest,
+                   ann_esc_mean=mean(ann_esc),
                    ann_esc_lo25 = quantile(ann_esc, 0.25),
                    ann_esc_hi75 = quantile(ann_esc, 0.75),
                    ann_esc_50 = quantile(ann_esc, 0.5),
-                   ann_esc_mean=mean(ann_esc[which(ann_esc > 0)]),
+                   ann_esc_mean_g=mean(ann_esc[which(ann_esc > 0)]),
                    zero_esc = length(which(ann_esc==0))/length(ann_esc),
                    cv_esc = sd(ann_esc) / mean(ann_esc)
                    )
 
 test=rbind(summary) %>%
 group_by(scenario) %>%
-summarise(median_tot_ben = median(med_ben),
-          median_ann_h=median(ann_harvest_50), 
-          mediam_ann_rec=median(ann_rec_50),
-          median_ann_esc=median(ann_esc_50),
-          mean_acum=mean(m_acnb),
+summarise(mean_acum=mean(m_acnb),
+          mean_ben=mean(m_ben),
+          mean_nb=mean(m_nb),
+          mean_cum_harvest=mean(m_h),
+          mean_crec=mean(m_crec),
+          mean_ann_harvest = mean(ann_harvest_mean),
+          mean_ann_rec = mean(ann_rec_mean),
+          mean_ann_esc = mean(ann_esc_mean),
+          mean_cv_acnb=mean(cv_acnb),
           mean_cv_ben=mean(cv_ben),
           mean_cv_nb = mean(cv_nb),
+          mean_cv_harvest = mean(cv_cum_harv),
+          mean_cv_rec = mean(cv_crec),
           mean_cv_ann_harvest = mean(cv_ann_harvest),
-          mean_cv_rec = mean(cv_rec),
-          mean_cv_est = mean(cv_esc)
+          mean_cv_ann_rec = mean(cv_rec),
+          mean_cv_ann_est = mean(cv_esc)
           )  
 test <- dplyr::left_join(test, zeros)
 tabl_harvest[[i]] <- test

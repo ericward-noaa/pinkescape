@@ -31,7 +31,7 @@ for(run_type in c("odd","even")) {
     sims = 1000,
     time_steps = 100,
     run = run_type,
-    deterministic_model = FALSE,
+    deterministic_model = TRUE,
     pr_12 = 0.118,
     pr_21 = 0.202,
     escapement_rule = "both",
@@ -42,6 +42,7 @@ for(run_type in c("odd","even")) {
     price_cv = 0,
     time_lag = 0,
     rec_std = rec_sd[i],
+    msy_scenario = "msy",
     seed = 123
   )
   dfs[[i]]$scenario <- paste(rec_sd[i])
@@ -65,7 +66,7 @@ for(run_type in c("odd","even")) {
     sims = 1000,
     time_steps = 100,
     run = run_type,
-    deterministic_model = FALSE,
+    deterministic_model = TRUE,
     pr_12 = 0.118,
     pr_21 = 0.202,
     escapement_rule = "both",
@@ -76,6 +77,7 @@ for(run_type in c("odd","even")) {
     price_cv = 0.1,
     time_lag = 0,
     rec_std = rec_sd[i],
+    msy_scenario = "msy",
     seed = 123
   )
   dfs[[i]]$scenario <- paste(rec_sd[i])
@@ -102,7 +104,7 @@ for(run_type in c("odd","even")) {
     sims = 1000,
     time_steps = 100,
     run = run_type,
-    deterministic_model = FALSE,
+    deterministic_model = TRUE,
     pr_12 = 0.118,
     pr_21 = 0.202,
     escapement_rule = "both",
@@ -113,6 +115,7 @@ for(run_type in c("odd","even")) {
     price_cv = 0,
     time_lag = time_lags[i],
     rec_std = 0.1,
+    msy_scenario = "msy",
     seed = 123
   )
   dfs[[i]]$scenario <- paste(time_lags[i])
@@ -137,7 +140,7 @@ for(run_type in c("odd","even")) {
     sims = 1000,
     time_steps = 100,
     run = run_type,
-    deterministic_model = FALSE,
+    deterministic_model = TRUE,
     pr_12 = 0.118,
     pr_21 = 0.202,
     escapement_rule = "both",
@@ -148,6 +151,7 @@ for(run_type in c("odd","even")) {
     price_cv = 0.1,
     time_lag = time_lags[i],
     rec_std = 0.1,
+    msy_scenario = "msy",
     seed = 123
   )
   dfs[[i]]$scenario <- paste(time_lags[i])
@@ -173,7 +177,7 @@ for(run_type in c("odd","even")) {
     sims = 1000,
     time_steps = 100,
     run = run_type,
-    deterministic_model = FALSE,
+    deterministic_model = TRUE,
     pr_12 = 0.118,
     pr_21 = 0.202,
     escapement_rule = "both",
@@ -184,6 +188,7 @@ for(run_type in c("odd","even")) {
     price_cv = 0,
     time_lag = 0,
     rec_std = 0.1,
+    msy_scenario = "msy",
     seed = 123
   )
   dfs[[i]]$scenario <- paste(price_declines[i])
@@ -211,7 +216,7 @@ for(run_type in c("odd","even")) {
     sims = 1000,
     time_steps = 100,
     run = run_type,
-    deterministic_model = FALSE,
+    deterministic_model = TRUE,
     pr_12 = 0.118,
     pr_21 = 0.202,
     escapement_rule = "both",
@@ -222,6 +227,7 @@ for(run_type in c("odd","even")) {
     price_cv = 0.1,
     time_lag = 0,
     rec_std = 0.1,
+    msy_scenario = "msy",
     seed = 123
   )
   dfs[[i]]$scenario <- paste(price_declines[i])
@@ -235,67 +241,69 @@ Probability of transition
 ```{r sim4, cache=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
 
 # loop over different values of pr12
-pr_12_cng = c(0.0015, 0.118)
+trans_prob = c(0.0015, 0.118)
 run_name = "transprob"
 
 for(run_type in c("odd","even")) {
   dfs = list()
-  for(i in 1:length(pr_12_cng)) {
+  for(i in 1:length(trans_prob)) {
   
   dfs[[i]] = sim(
     sims = 1000,
     time_steps = 100,
     run = run_type,
-    deterministic_model = FALSE,
-    pr_12 = pr_12_cng[i],
+    deterministic_model = TRUE,
+    pr_12 = trans_prob[i],
     pr_21 = 0.202,
     escapement_rule = "both",
     harvest_CV = 0,
     discount_rate = 0.1,
-    price_linear_change = price_declines[i],
+    price_linear_change = 0,
     price_acf = 0,
     price_cv = 0,
     time_lag = 0,
     rec_std = 0.1,
+    msy_scenario = "msy",
     seed = 123
   )
-  dfs[[i]]$scenario <- paste(price_declines[i])
+  dfs[[i]]$scenario <- paste(trans_prob[i])
   }
   saveRDS(dfs, file = paste0("model_output/",run_type,"/",run_name,".rds"))
 }
 
 ```
 
-With recruitment CV
+With price CV
 
 ```{r sim4b, cache=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
 
 # loop over different values of pr12
-pr_12_cng = c(0.0015, 0.118)
+trans_prob = c(0.0015, 0.118)
 run_name = "transprob_pricevar"
 
 for(run_type in c("odd","even")) {
   dfs = list()
-  for(i in 1:length(pr_12_cng)) {
+  for(i in 1:length(trans_prob)) {
   
   dfs[[i]] = sim(
     sims = 1000,
     time_steps = 100,
     run = run_type,
-    deterministic_model = FALSE,
-    pr_12 = pr_12_cng[i],
+    deterministic_model = TRUE,
+    pr_12 = trans_prob[i],
     pr_21 = 0.202,
     escapement_rule = "both",
     harvest_CV = 0,
     discount_rate = 0.1,
-    price_linear_change = price_declines[i],
+    price_linear_change = 0,
     price_acf = 0,
     price_cv = 0.1,
     time_lag = 0,
     rec_std = 0.1,
+    msy_scenario = "msy",
     seed = 123
   )
-  dfs[[i]]$scenario <- paste(price_declines[i])
+  dfs[[i]]$scenario <- paste(trans_prob[i])
   }
   saveRDS(dfs, file = paste0("model_output/",run_type,"/",run_name,".rds"))
 }
@@ -310,7 +318,7 @@ This is meant to simulate imperfect harvest (above / below realized optimum)
 ```{r sim5, cache=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
 
 run_name = "harvest_CV"
-harvest_cv = c(0, 0.1, 0.2)
+harvest_cv = c(0, 0.05, 0.1)
 
 for(run_type in c("odd","even")) {
   dfs = list()
@@ -320,13 +328,53 @@ for(run_type in c("odd","even")) {
     sims = 1000,
     time_steps = 100,
     run = run_type,
-    deterministic_model = FALSE,
-    pr_12 = 0.118,
+    deterministic_model = TRUE,
+    pr_12 = .118,
     pr_21 = 0.202,
     escapement_rule = "both",
-    discount_rate = 0.1,
     harvest_CV = harvest_cv[i],
+    discount_rate = 0.1,
+    price_linear_change = 0,
+    price_acf = 0,
+    price_cv = 0,
+    time_lag = 0,
     rec_std = 0.1,
+    msy_scenario = "msy",
+    
+    seed = 123
+  )
+  dfs[[i]]$scenario <- paste(harvest_cv[i])
+  }
+  saveRDS(dfs, file = paste0("model_output/",run_type,"/",run_name,".rds"))
+}
+```
+
+```{r sim6, cache=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+
+run_name = "harvest_CV_pricevar"
+harvest_cv = c(0, 0.05, 0.1)
+
+for(run_type in c("odd","even")) {
+  dfs = list()
+  for(i in 1:length(harvest_cv)) {
+  
+  dfs[[i]] = sim(
+    sims = 1000,
+    time_steps = 100,
+    run = run_type,
+    deterministic_model = TRUE,
+    pr_12 = .118,
+    pr_21 = 0.202,
+    escapement_rule = "both",
+    harvest_CV = harvest_cv[i],
+    discount_rate = 0.1,
+    price_linear_change = 0,
+    price_acf = 0,
+    price_cv = 0.1,
+    time_lag = 0,
+    rec_std = 0.1,
+    msy_scenario = "msy",
+    
     seed = 123
   )
   dfs[[i]]$scenario <- paste(harvest_cv[i])

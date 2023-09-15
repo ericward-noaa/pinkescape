@@ -25,7 +25,9 @@ scenarios = expand.grid(run_name = c("rec_sd",
              "price_decline",
              "price_decline_pricevar",
              "transprob",
-             "transprob_pricevar"),
+             "transprob_pricevar",
+             "harvest_CV",
+             "harvest_CV_pricevar"),
              run_type = c("odd","even"))
 
 scenarios$label <- scenarios$run_name # change me
@@ -96,7 +98,8 @@ summary = summary_all %>%
                    ann_esc_lo25 = quantile(ann_esc, 0.25),
                    ann_esc_hi75 = quantile(ann_esc, 0.75),
                    ann_esc_50 = quantile(ann_esc, 0.5),
-                   ann_esc_mean=mean(ann_esc[which(ann_esc > 0)]),
+                   ann_esc_mean=mean(ann_esc),
+                   ann_esc_mean_g=mean(ann_esc[which(ann_esc > 0)]),
                    zero_esc = length(which(ann_esc==0))/length(ann_esc)
                    )
 
@@ -177,7 +180,7 @@ print(g0bh1)
 g0br <- ggplot(summary, aes(t, ann_rec_mean, col = scenario, fill = scenario)) +
   #geom_ribbon(aes(ymin=lo25_ben, ymax=hi75_ben), alpha=0.5, col=NA) +
   geom_line() +
-  ylab(scenarios$label[i]) + 
+  ylab("Mean annual recruitment") + 
   xlab("Time") + 
   scale_color_viridis_d(end=0.4) + 
   scale_fill_viridis_d(end=0.4) +
@@ -188,6 +191,20 @@ g0br <- ggplot(summary, aes(t, ann_rec_mean, col = scenario, fill = scenario)) +
 g0br1<-g0br + theme(legend.position="top")
 print(g0br1)
 #ggsave("g0br_recCV.pdf", width = 4, height = 4)
+
+g0be <- ggplot(summary, aes(t, ann_esc_mean, col = scenario, fill = scenario)) +
+  #geom_ribbon(aes(ymin=lo25_ben, ymax=hi75_ben), alpha=0.5, col=NA) +
+  geom_line() +
+  ylab("Mean annual escapement") + 
+  xlab("Time") + 
+  scale_color_viridis_d(end=0.4) + 
+  scale_fill_viridis_d(end=0.4) +
+  ylim(NA,15)+ 
+  guides(fill=guide_legend(title=scenarios$label[i]),
+         col=guide_legend(title=scenarios$label[i]))+
+  theme(aspect.ratio=1/1)
+g0be1<-g0be + theme(legend.position="top")
+print(g0be1)
 
 g0bnb <- ggplot(summary, aes(t, m_nb/1000000, col = scenario, fill = scenario)) +
   #geom_ribbon(aes(ymin=lo25_ben, ymax=hi75_ben), alpha=0.5, col=NA) +
@@ -202,6 +219,13 @@ g0bnb <- ggplot(summary, aes(t, m_nb/1000000, col = scenario, fill = scenario)) 
 g0bnb1<-g0bnb + theme(legend.position="top")
 print(g0bnb1)
 #ggsave("g0bnb_recCV.pdf", width = 4, height = 4)
+
+print(ggarrange(g0ac, g0c, g0d, ncol=1, common.legend = TRUE, legend="top"))
+
+print(ggarrange(g0bnb, g0bh, g0b, ncol=1, common.legend = TRUE, legend="top"))
+
+
+print(ggarrange(g0ac, g0bnb, g0c, g0bh, g0d, g0b, ncol=2, nrow=3, common.legend = TRUE, legend="top"))
 
 g1 <- ggplot(summary, aes(t, med_ben, col = scenario, fill = scenario)) + 
   geom_ribbon(aes(ymin=lo25_ben, ymax=hi75_ben), alpha=0.5, col=NA) +
@@ -288,113 +312,113 @@ g8 <- ggplot(summary, aes(t, med_nb, col = scenario, fill = scenario)) +
   guides(fill=guide_legend(title=scenarios$label[i]),
          col=guide_legend(title=scenarios$label[i])) 
 
-g88 <- g8 + theme(axis.title.x = element_text(face="bold", colour="black", size=60),
-           axis.text.x  = element_text(angle=0, vjust=0.5, size=56),
-           axis.title.y = element_text(face="bold", colour="black", size=60),
-           axis.text.y  = element_text(angle=0, vjust=0.5, size=56),
+g88 <- g8 + theme(axis.title.x = element_text(face="bold", colour="black", size=10),
+           axis.text.x  = element_text(angle=0, vjust=0.5, size=10),
+           axis.title.y = element_text(face="bold", colour="black", size=10),
+           axis.text.y  = element_text(angle=0, vjust=0.5, size=10),
            legend.position="top",
-           legend.title = element_text(colour="black", size=65, face="bold"),
-           legend.text = element_text(colour="black", size=65, face="bold"),
+           legend.title = element_text(colour="black", size=10, face="bold"),
+           legend.text = element_text(colour="black", size=10, face="bold"),
            legend.key.size = unit(2, "cm"))
 
 
-g7 + theme(axis.title.x = element_text(face="bold", colour="black", size=60),
+g7 + theme(axis.title.x = element_text(face="bold", colour="black", size=10),
+           axis.text.x  = element_text(angle=0, vjust=0.5, size=10),
+           axis.title.y = element_text(face="bold", colour="black", size=10),
+           axis.text.y  = element_text(angle=0, vjust=0.5, size=10),
+           legend.position="top",
+           legend.title = element_text(colour="black", size=10, face="bold"),
+           legend.text = element_text(colour="black", size=10, face="bold"),
+           legend.key.size = unit(2, "cm"))
+g11 <- g1 + theme(axis.title.x = element_text(face="bold", colour="black", size=10),
+           axis.text.x  = element_text(angle=0, vjust=0.5, size=10),
+           axis.title.y = element_text(face="bold", colour="black", size=10),
+           axis.text.y  = element_text(angle=0, vjust=0.5, size=10),
+           legend.position="top",
+           legend.title = element_text(colour="black", size=10, face="bold"),
+           legend.text = element_text(colour="black", size=10, face="bold"),
+           legend.key.size = unit(2, "cm"))
+g22 <- g2 + theme(axis.title.x = element_text(face="bold", colour="black", size=10),
+           axis.text.x  = element_text(angle=0, vjust=0.5, size=10),
+           axis.title.y = element_text(face="bold", colour="black", size=10),
+           axis.text.y  = element_text(angle=0, vjust=0.5, size=20),
+           legend.position="top",
+           legend.title = element_text(colour="black", size=10, face="bold"),
+           legend.text = element_text(colour="black", size=10, face="bold"),
+           legend.key.size = unit(2, "cm"))
+g33 <- g3 + theme(axis.title.x = element_text(face="bold", colour="black", size=10),
+           axis.text.x  = element_text(angle=0, vjust=0.5, size=10),
+           axis.title.y = element_text(face="bold", colour="black", size=10),
+           axis.text.y  = element_text(angle=0, vjust=0.5, size=10),
+           legend.position="top",
+           legend.title = element_text(colour="black", size=10, face="bold"),
+           legend.text = element_text(colour="black", size=10, face="bold"),
+           legend.key.size = unit(2, "cm"))
+g55 <- g5 + theme(axis.title.x = element_text(face="bold", colour="black", size=10),
+           axis.text.x  = element_text(angle=0, vjust=0.5, size=10),
+           axis.title.y = element_text(face="bold", colour="black", size=10),
+           axis.text.y  = element_text(angle=0, vjust=0.5, size=10),
+           legend.position="top",
+           legend.title = element_text(colour="black", size=10, face="bold"),
+           legend.text = element_text(colour="black", size=10, face="bold"),
+           legend.key.size = unit(2, "cm"))
+g66 <-g6 + theme(axis.title.x = element_text(face="bold", colour="black", size=10),
+           axis.text.x  = element_text(angle=0, vjust=0.5, size=10),
+           axis.title.y = element_text(face="bold", colour="black", size=10),
+           axis.text.y  = element_text(angle=0, vjust=0.5, size=20),
+           legend.position="top",
+           legend.title = element_text(colour="black", size=45, face="bold"),
+           legend.text = element_text(colour="black", size=45, face="bold"),
+           legend.key.size = unit(2, "cm"))
+g44<-g4 + theme(axis.title.x = element_text(face="bold", colour="black", size=10),
            axis.text.x  = element_text(angle=0, vjust=0.5, size=56),
-           axis.title.y = element_text(face="bold", colour="black", size=60),
-           axis.text.y  = element_text(angle=0, vjust=0.5, size=56),
+           axis.title.y = element_text(face="bold", colour="black", size=10),
+           axis.text.y  = element_text(angle=0, vjust=0.5, size=10),
            legend.position="top",
-           legend.title = element_text(colour="black", size=65, face="bold"),
-           legend.text = element_text(colour="black", size=65, face="bold"),
-           legend.key.size = unit(2, "cm"))
-g11 <- g1 + theme(axis.title.x = element_text(face="bold", colour="black", size=20),
-           axis.text.x  = element_text(angle=0, vjust=0.5, size=20),
-           axis.title.y = element_text(face="bold", colour="black", size=15),
-           axis.text.y  = element_text(angle=0, vjust=0.5, size=20),
-           legend.position="top",
-           legend.title = element_text(colour="black", size=45, face="bold"),
-           legend.text = element_text(colour="black", size=45, face="bold"),
-           legend.key.size = unit(2, "cm"))
-g22 <- g2 + theme(axis.title.x = element_text(face="bold", colour="black", size=20),
-           axis.text.x  = element_text(angle=0, vjust=0.5, size=20),
-           axis.title.y = element_text(face="bold", colour="black", size=15),
-           axis.text.y  = element_text(angle=0, vjust=0.5, size=20),
-           legend.position="top",
-           legend.title = element_text(colour="black", size=45, face="bold"),
-           legend.text = element_text(colour="black", size=45, face="bold"),
-           legend.key.size = unit(2, "cm"))
-g33 <- g3 + theme(axis.title.x = element_text(face="bold", colour="black", size=20),
-           axis.text.x  = element_text(angle=0, vjust=0.5, size=20),
-           axis.title.y = element_text(face="bold", colour="black", size=15),
-           axis.text.y  = element_text(angle=0, vjust=0.5, size=20),
-           legend.position="top",
-           legend.title = element_text(colour="black", size=45, face="bold"),
-           legend.text = element_text(colour="black", size=45, face="bold"),
-           legend.key.size = unit(2, "cm"))
-g55 <- g5 + theme(axis.title.x = element_text(face="bold", colour="black", size=20),
-           axis.text.x  = element_text(angle=0, vjust=0.5, size=20),
-           axis.title.y = element_text(face="bold", colour="black", size=15),
-           axis.text.y  = element_text(angle=0, vjust=0.5, size=20),
-           legend.position="top",
-           legend.title = element_text(colour="black", size=45, face="bold"),
-           legend.text = element_text(colour="black", size=45, face="bold"),
-           legend.key.size = unit(2, "cm"))
-g66 <-g6 + theme(axis.title.x = element_text(face="bold", colour="black", size=20),
-           axis.text.x  = element_text(angle=0, vjust=0.5, size=20),
-           axis.title.y = element_text(face="bold", colour="black", size=15),
-           axis.text.y  = element_text(angle=0, vjust=0.5, size=20),
-           legend.position="top",
-           legend.title = element_text(colour="black", size=45, face="bold"),
-           legend.text = element_text(colour="black", size=45, face="bold"),
-           legend.key.size = unit(2, "cm"))
-g44<-g4 + theme(axis.title.x = element_text(face="bold", colour="black", size=60),
-           axis.text.x  = element_text(angle=0, vjust=0.5, size=56),
-           axis.title.y = element_text(face="bold", colour="black", size=60),
-           axis.text.y  = element_text(angle=0, vjust=0.5, size=56),
-           legend.position="top",
-           legend.title = element_text(colour="black", size=65, face="bold"),
-           legend.text = element_text(colour="black", size=65, face="bold"),
+           legend.title = element_text(colour="black", size=10, face="bold"),
+           legend.text = element_text(colour="black", size=10, face="bold"),
            legend.key.size = unit(2, "cm"))
 
-print(ggarrange(g5, g6, ncol=1, common.legend = TRUE, legend="top"))
-print(ggarrange(g11, g55, g66, ncol=1, common.legend = TRUE, legend="top"))
-print(ggarrange(g11, g22, g33, ncol=1, common.legend = TRUE, legend="top"))
-print(ggarrange(g4, g5, g6, ncol=1, common.legend = TRUE, legend="top"))
-g0a1 <- g0a + theme(axis.title.x = element_text(face="bold", colour="black", size=20),
-           axis.text.x  = element_text(angle=0, vjust=0.5, size=20),
-           axis.title.y = element_text(face="bold", colour="black", size=15),
-           axis.text.y  = element_text(angle=0, vjust=0.5, size=20),
+#print(ggarrange(g5, g6, ncol=1, common.legend = TRUE, legend="top"))
+#print(ggarrange(g11, g55, g66, ncol=1, common.legend = TRUE, legend="top"))
+#print(ggarrange(g11, g22, g33, ncol=1, common.legend = TRUE, legend="top"))
+#print(ggarrange(g4, g5, g6, ncol=1, common.legend = TRUE, legend="top"))
+g0a1 <- g0a + theme(axis.title.x = element_text(face="bold", colour="black", size=10),
+           axis.text.x  = element_text(angle=0, vjust=0.5, size=10),
+           axis.title.y = element_text(face="bold", colour="black", size=10),
+           axis.text.y  = element_text(angle=0, vjust=0.5, size=10),
            legend.position="top",
-           legend.title = element_text(colour="black", size=45, face="bold"),
-           legend.text = element_text(colour="black", size=45, face="bold"),
+           legend.title = element_text(colour="black", size=10, face="bold"),
+           legend.text = element_text(colour="black", size=10, face="bold"),
            legend.key.size = unit(2, "cm"))
-print(g0a1)
+#print(g0a1)
 #ggsave("g0a1.pdf", width = 4, height = 4)
-g0c1 <- g0c + theme(axis.title.x = element_text(face="bold", colour="black", size=20),
-           axis.text.x  = element_text(angle=0, vjust=0.5, size=20),
-           axis.title.y = element_text(face="bold", colour="black", size=15),
-           axis.text.y  = element_text(angle=0, vjust=0.5, size=20),
+g0c1 <- g0c + theme(axis.title.x = element_text(face="bold", colour="black", size=10),
+           axis.text.x  = element_text(angle=0, vjust=0.5, size=10),
+           axis.title.y = element_text(face="bold", colour="black", size=10),
+           axis.text.y  = element_text(angle=0, vjust=0.5, size=10),
            legend.position="top",
-           legend.title = element_text(colour="black", size=45, face="bold"),
-           legend.text = element_text(colour="black", size=45, face="bold"),
+           legend.title = element_text(colour="black", size=10, face="bold"),
+           legend.text = element_text(colour="black", size=10, face="bold"),
            legend.key.size = unit(2, "cm"))
-g0d1 <- g0d + theme(axis.title.x = element_text(face="bold", colour="black", size=20),
-           axis.text.x  = element_text(angle=0, vjust=0.5, size=20),
-           axis.title.y = element_text(face="bold", colour="black", size=15),
-           axis.text.y  = element_text(angle=0, vjust=0.5, size=20),
+g0d1 <- g0d + theme(axis.title.x = element_text(face="bold", colour="black", size=10),
+           axis.text.x  = element_text(angle=0, vjust=0.5, size=10),
+           axis.title.y = element_text(face="bold", colour="black", size=10),
+           axis.text.y  = element_text(angle=0, vjust=0.5, size=10),
            legend.position="top",
-           legend.title = element_text(colour="black", size=45, face="bold"),
-           legend.text = element_text(colour="black", size=45, face="bold"),
+           legend.title = element_text(colour="black", size=10, face="bold"),
+           legend.text = element_text(colour="black", size=10, face="bold"),
            legend.key.size = unit(2, "cm"))
-print(ggarrange(g0a1, g0c1, g0d1, ncol=1, common.legend = TRUE, legend="top"))
+#print(ggarrange(g0a1, g0c1, g0d1, ncol=1, common.legend = TRUE, legend="top"))
 
 
-g0b1<-g0b + theme(axis.title.x = element_text(face="bold", colour="black", size=60),
-           axis.text.x  = element_text(angle=0, vjust=0.5, size=56),
-           axis.title.y = element_text(face="bold", colour="black", size=60),
-           axis.text.y  = element_text(angle=0, vjust=0.5, size=56),
+g0b1<-g0b + theme(axis.title.x = element_text(face="bold", colour="black", size=10),
+           axis.text.x  = element_text(angle=0, vjust=0.5, size=10),
+           axis.title.y = element_text(face="bold", colour="black", size=10),
+           axis.text.y  = element_text(angle=0, vjust=0.5, size=10),
            legend.position="top",
-           legend.title = element_text(colour="black", size=65, face="bold"),
-           legend.text = element_text(colour="black", size=65, face="bold"),
+           legend.title = element_text(colour="black", size=10, face="bold"),
+           legend.text = element_text(colour="black", size=10, face="bold"),
            legend.key.size = unit(2, "cm"))
 #ggarrange(g44,g0b1, ncol=1, common.legend = TRUE, legend="top")
 dev.off()

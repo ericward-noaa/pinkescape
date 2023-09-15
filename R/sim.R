@@ -210,7 +210,7 @@ sim <- function(sims = 1000, # number of simulations
           harvest[t] = 0
           if(t > time_lag) {
             Smsy = -(1 - lambert_W0(exp(1 - ricker_pars$a[x[t - time_lag]]))) / ricker_pars$b[x[t - time_lag]] # https://peerj.com/articles/1623/
-            if(1 > time_lag) harvest = max(rec - Smsy, 0)
+            if(1 > time_lag) harvest[t] = max(rec - Smsy, 0)
             optimal_escapement[t] = Smsy
             if(t > time_lag) harvest[t] = max(rec[t] - Smsy, 0)
           }
