@@ -220,7 +220,7 @@ sim <- function(sims = 1000, # number of simulations
           harvest[t] <- 0
           if(t > time_lag) {
             harvest[t] <- max(rec[t] - ricker_pars$S_star[x[t - time_lag]], 0)
-            optimal_escapement[t] = ricker_pars$S_star[x[t - time_lag]]
+            optimal_escapement[t] <- ricker_pars$S_star[x[t - time_lag]]
           }
         }
       }
@@ -229,6 +229,7 @@ sim <- function(sims = 1000, # number of simulations
       if(harvest_CV > 0) {
         harvest[t] <- harvest[t] * exp(rnorm(1,mean=0,sd=harvest_CV) - harvest_CV*harvest_CV/2.0)
         if(harvest[t] > rec[t] - optimal_escapement[t]) harvest[t] <- rec[t] - optimal_escapement[t]
+        if(harvest[t] < 0) harvest[t] <- 0
       }
 
 
