@@ -1,39 +1,18 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>/404.html</loc>
-  </url>
-  <url>
-    <loc>/articles/a01_basic_examples.html</loc>
-  </url>
-  <url>
-    <loc>/articles/a02_time_varying_prices.html</loc>
-  </url>
-  <url>
-    <loc>/articles/examples.html</loc>
-  </url>
-  <url>
-    <loc>/articles/index.html</loc>
-  </url>
-  <url>
-    <loc>/authors.html</loc>
-  </url>
-  <url>
-    <loc>/index.html</loc>
-  </url>
-  <url>
-    <loc>/reference/get_ricker.html</loc>
-  </url>
-  <url>
-    <loc>/reference/index.html</loc>
-  </url>
-  <url>
-    <loc>/reference/sim.html</loc>
-  </url>
-  <url>
-    <loc>/reference/summarize_plots.html</loc>
-  </url>
-  <url>
-    <loc>/reference/summarize_quantities.html</loc>
-  </url>
+<urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
+<url><loc>/404.html</loc></url>
+<url><loc>/articles/a01_basic_examples.html</loc></url>
+<url><loc>/articles/a02_time_varying_prices.html</loc></url>
+<url><loc>/articles/examples.html</loc></url>
+<url><loc>/articles/index.html</loc></url>
+<url><loc>/authors.html</loc></url>
+<url><loc>/index.html</loc></url>
+<url><loc>/reference/get_ricker.html</loc></url>
+<url><loc>/reference/index.html</loc></url>
+<url><loc>/reference/plot_summary.html</loc></url>
+<url><loc>/reference/ricker_defaults.html</loc></url>
+<url><loc>/reference/sim.html</loc></url>
+<url><loc>/reference/summarize_plots.html</loc></url>
+<url><loc>/reference/summarize_quantities.html</loc></url>
+<url><loc>/reference/summarize_simulations.html</loc></url>
 </urlset>
+

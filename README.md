@@ -6,6 +6,9 @@ output:
 # pinkescape
 Repo for simulating pink salmon escapement
 
+<!-- badges: start -->
+[![R-CMD-check](https://github.com/ericward-noaa/pinkescape/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/ericward-noaa/pinkescape/actions/workflows/R-CMD-check.yaml)
+<!-- badges: end -->
 
 ## Installation
 
@@ -18,7 +21,7 @@ remotes::install_github("ericward-noaa/pinkescape", dependencies = TRUE)
 
 The package consists of a single function for simulating data, with the following arguments. Additional details can be found in the help file 
 
-```{r, eval=TRUE}
+```{r, eval=FALSE}
 library(pinkescape)
 
 df = sim(
@@ -38,7 +41,7 @@ df = sim(
 
 ## Plotting output
 
-```{r, eval=TRUE}
+```{r, eval=FALSE}
 library(ggplot2)
 p1 <- ggplot(df, aes(t, regime)) + geom_point() + geom_line() +
   theme_bw() + xlab("Time") + ylab("Regime")
@@ -55,13 +58,13 @@ gridExtra::grid.arrange(p1,p2,p3,p4,p5,ncol=2)
   
 ## Calculating net benefits across simulations
 
-```{r, eval=TRUE}
+```{r, eval=FALSE}
 # calculate product
 df$discount_nb = df$net_benefits*df$discount
 
 # calculate the sum for each simulation
 library(dplyr)
-summary = dplyr::group_by(df, sim) %>% 
+summary = dplyr::group_by(df, sim) |>
 dplyr::summarise(tot_ben = sum(discount_nb))
  
 ggplot(summary, aes(tot_ben)) + geom_histogram() + 
