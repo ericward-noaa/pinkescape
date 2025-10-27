@@ -8,6 +8,8 @@ Repo for simulating pink salmon escapement
 
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/ericward-noaa/pinkescape/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/ericward-noaa/pinkescape/actions/workflows/R-CMD-check.yaml)
+
+[![DOI](https://zenodo.org/badge/477816295.svg)](https://doi.org/10.5281/zenodo.6621471)
 <!-- badges: end -->
 
 ## Installation
