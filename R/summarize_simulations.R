@@ -1,4 +1,4 @@
-#' summarize_quantities returns summaries of benefits, harvest, and recruitment
+#' summarize_simulations returns summaries of benefits, harvest, and recruitment
 #' @param df A dataframe. If 'scenario' is included as a variable, it is used for grouping
 #' @param quantiles a 2 element vector containing the quantiles to be reported (along with mean and median). Defaults to c(0.25, 0.75)
 #' @return data frame of default parameters for simulations
@@ -7,16 +7,16 @@
 #' @import dplyr
 #' @importFrom stats median quantile
 #'
-summarize_quantities = function(df, quantiles = c(0.25, 0.75)) {
+summarize_simulations = function(df, quantiles = c(0.25, 0.75)) {
 
   if("scenario" %in% names(df) == FALSE) df$scenario <- "all"
 
   # calculate the cumulative sum over time for each simulation / scenario
-  summary <- dplyr::group_by(df, sim, scenario) %>%
+  summary <- dplyr::group_by(df, sim, scenario) |>
     dplyr::mutate(cum_ben = cumsum(discount_netben),
                   cum_harv = cumsum(harvest),
-                  cum_rec = cumsum(rec)) %>%
-    dplyr::group_by(t, scenario) %>% # now group by scenario and calculate the quartiles at each time step
+                  cum_rec = cumsum(rec)) |>
+    dplyr::group_by(t, scenario) |> # now group by scenario and calculate the quartiles at each time step
     dplyr::summarise(lo25_ben = quantile(cum_ben, quantiles[1]),
                      hi75_ben = quantile(cum_ben, quantiles[2]),
                      m_ben = mean(cum_ben),
@@ -50,8 +50,3 @@ summarize_quantities = function(df, quantiles = c(0.25, 0.75)) {
   return(summary)
 }
 
-
-# Jan: calculate metric of stabiltiy (CV or 1/CV)
-# Jan: compare all scenarios relative to fixed pre
-# Toby: include non-linear relationship between price and participation (harvest)
-# Dave: compare short v long management response

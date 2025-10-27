@@ -1,9 +1,9 @@
-#' get_ricker returns the default parameters of the Ricker simulations
+#' ricker_defaults returns the default parameters of the Ricker simulations
 #' @return data frame of default parameters for simulations
 #'
 #' @export
 #'
-get_ricker = function() {
+ricker_defaults = function() {
   ricker_pars <- data.frame("regime" = c("pre","post","pre","post"),
                             "regime_id" = c(1,2,1,2),
                             "run" = c("odd","odd","even","even"),

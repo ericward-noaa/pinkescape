@@ -88,8 +88,8 @@ We can look at total net benefits across scenario. This is shown in log-space be
 
 ```{r}
 df_summary = mutate(df,
-                              net_ben = discount*net_benefits) %>%
-  group_by(scenario, sim) %>%
+                              net_ben = discount*net_benefits) |>
+  group_by(scenario, sim) |>
   summarise(tot_ben = sum(net_ben))
 
 ggplot(df_summary, aes(scenario, log(tot_ben),group=scenario)) +
@@ -101,8 +101,8 @@ We could also look at making time series of benefits over time for each scenario
 
 ```{r}
 df_summary = mutate(df,
-                              net_ben = discount*net_benefits) %>%
-  group_by(scenario, t) %>%
+                              net_ben = discount*net_benefits) |>
+  group_by(scenario, t) |>
   summarise(mean_ben = median(net_ben),
             lo = quantile(net_ben,0.025),
             hi = quantile(net_ben,0.975))

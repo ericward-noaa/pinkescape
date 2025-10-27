@@ -32,13 +32,13 @@ df_hi = sim(rec_std = 0.2)
 
 # summarize total benefits
 df_lo_summary = mutate(df_lo,
-                              net_ben = discount*net_benefits) %>%
-  group_by(sim) %>%
+                              net_ben = discount*net_benefits) |>
+  group_by(sim) |>
   summarise(tot_ben = sum(net_ben))
 
 df_hi_summary = mutate(df_hi,
-                              net_ben = discount*net_benefits) %>%
-  group_by(sim) %>%
+                              net_ben = discount*net_benefits) |>
+  group_by(sim) |>
   summarise(tot_ben = sum(net_ben))
 
 df_lo_summary$sd = 0.05
@@ -82,12 +82,12 @@ df_lo = sim(rec_acf = 0)
 df_hi = sim(rec_acf = 0.7)
 # summarize
 df_lo_summary = mutate(df_lo,
-                              net_ben = discount*net_benefits) %>%
-  group_by(sim) %>%
+                              net_ben = discount*net_benefits) |>
+  group_by(sim) |>
   summarise(tot_ben = sum(net_ben))
 df_hi_summary = mutate(df_hi,
-                              net_ben = discount*net_benefits) %>%
-  group_by(sim) %>%
+                              net_ben = discount*net_benefits) |>
+  group_by(sim) |>
   summarise(tot_ben = sum(net_ben))
 df_lo_summary$acf = 0
 df_hi_summary$acf = 0.7
@@ -107,10 +107,10 @@ sim(harvest_CV = 0.5)
 
 ## Using custom Ricker parameters
 
-Instead of the defaults, we can create a dataframe with custom parameters and pass these in. The default parameters can be found using the `get_ricker()` function,  
+Instead of the defaults, we can create a dataframe with custom parameters and pass these in. The default parameters can be found using the `ricker_defaults()` function,  
 
 ```{r}
-pars <- get_ricker()
+pars <- ricker_defaults()
 ```
 
 But let's change the Ricker $a$ and $b$ parameters. We have a custom 

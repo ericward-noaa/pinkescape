@@ -34,7 +34,7 @@ sim(
 
 \item{pr_12}{The probability of transitioning from state 1 to 2, defaults to 0.1}
 
-\item{pr_21}{The probability of transitioning from state 1 to 2, defaults to 0.1}
+\item{pr_21}{The probability of transitioning from state 2 to 1, defaults to 0.1}
 
 \item{run}{Whether to run this for the odd or even broodline, defaults to "odd"}
 

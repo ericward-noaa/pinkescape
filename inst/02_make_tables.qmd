@@ -43,25 +43,25 @@ for(i in 1:nrow(scenarios)) {
   df$discount_nb <- (df$net_benefits*df$discount)/1000000
 
   # calculate the sum for each simulation / scenario
-  summary_all = dplyr::group_by(df, sim, scenario) %>% 
+  summary_all = dplyr::group_by(df, sim, scenario) |> 
     dplyr::mutate(cum_ben = cumsum(discount_nb),
                   acum_ben = cumsum(discount_nb)*(.1/(1-(1+.1)^(-100))),
                   cum_harv = cumsum(harvest),
                   cum_rec = cumsum(rec)
                   )
   
-    zeros = dplyr::group_by(df, sim, scenario) %>% 
+    zeros = dplyr::group_by(df, sim, scenario) |> 
     dplyr::summarize(n_zeros = length(which(harvest==0)),
-                     pr_n_zeros=length(which(harvest==0))/length(harvest)) %>%
-      dplyr::group_by(scenario) %>%
+                     pr_n_zeros=length(which(harvest==0))/length(harvest)) |>
+      dplyr::group_by(scenario) |>
       dplyr::summarize(mean_zero = mean(n_zeros),
                        mean_pr_zero=mean(pr_n_zeros),
                        cv_zero = sd(n_zeros) / mean(n_zeros),
                        lower_25 = quantile(n_zeros,0.25),
                        upper_75 = quantile(n_zeros,0.75))
 # this is separated so that summary_all can be used below
-summary = summary_all %>%
-  dplyr::group_by(t, scenario) %>% 
+summary = summary_all |>
+  dplyr::group_by(t, scenario) |> 
   dplyr::summarise(lo25_acnb = quantile(acum_ben, 0.25),
                    hi75_acnb = quantile(acum_ben, 0.75),
                    m_acnb = mean(acum_ben),
@@ -122,8 +122,8 @@ summary = summary_all %>%
                    cv_esc = sd(ann_esc) / mean(ann_esc)
                    )
 
-test=rbind(summary) %>%
-group_by(scenario) %>%
+test=rbind(summary) |>
+group_by(scenario) |>
 summarise(mean_acum=mean(m_acnb),
           mean_ben=mean(m_ben),
           mean_nb=mean(m_nb),
@@ -144,8 +144,8 @@ summarise(mean_acum=mean(m_acnb),
 test <- dplyr::left_join(test, zeros)
 tabl_harvest[[i]] <- test
 
-test=rbind(summary) %>%
-  group_by(scenario) %>%
+test=rbind(summary) |>
+  group_by(scenario) |>
   summarise(sd_tot_ben = sd(med_ben),sd_ann_h=sd(ann_harvest_50), 
             sd_ann_rec=sd(ann_rec_50),sd_ann_esc=sd(ann_esc_50))  
 
@@ -164,63 +164,60 @@ scenarios$run_name <- gsub("_", " ", scenarios$run_name)    # remove
 indx <- which(scenarios$run_type=="odd")
 # Splitting this chunk out for formatting
 for(i in 1:length(indx)) {
-  print(tabl_harvest[[indx[i]]] %>%
+  print(tabl_harvest[[indx[i]]] |>
 kbl(caption = paste(scenarios$run_name[indx[i]], scenarios$run_type[indx[i]]),
-     digits = 3) %>%
+     digits = 3) |>
 kable_paper("hover", full_width = F))
 }
 
 ```
 
-```{=tex}
 \break
 \break
-```
+
 ```{r results='asis', echo = FALSE}
 
 scenarios$run_name <- gsub("_", " ", scenarios$run_name)    # remove
 indx <- which(scenarios$run_type=="odd")
 # Splitting this chunk out for formatting
 for(i in 1:length(indx)) {
-  print(tabl_benrec[[indx[i]]] %>%
+  print(tabl_benrec[[indx[i]]] |>
 kbl(caption = paste(scenarios$run_name[indx[i]], scenarios$run_type[indx[i]]),
-     digits = 3) %>%
+     digits = 3) |>
 kable_paper("hover", full_width = F))
 }
 
 ```
 
-```{=tex}
 \break
 \break
-```
+
 ```{r results='asis', echo = FALSE}
 
 scenarios$run_name <- gsub("_", " ", scenarios$run_name)    # remove
 indx <- which(scenarios$run_type=="even")
 # Splitting this chunk out for formatting
 for(i in 1:length(indx)) {
-  print(tabl_harvest[[indx[i]]] %>%
+  print(tabl_harvest[[indx[i]]] |>
 kbl(caption = paste(scenarios$run_name[indx[i]], scenarios$run_type[indx[i]]),
-     digits = 3) %>%
+     digits = 3) |>
 kable_paper("hover", full_width = F))
 }
 
 ```
 
-```{=tex}
 \break
 \break
-```
+
 ```{r results='asis', echo = FALSE}
 
 scenarios$run_name <- gsub("_", " ", scenarios$run_name)    # remove
 indx <- which(scenarios$run_type=="even")
 # Splitting this chunk out for formatting
 for(i in 1:length(indx)) {
-  print(tabl_benrec[[indx[i]]] %>%
+  print(tabl_benrec[[indx[i]]] |>
 kbl(caption = paste(scenarios$run_name[indx[i]], scenarios$run_type[indx[i]]),
-     digits = 3) %>%
+     digits = 3) |>
 kable_paper("hover", full_width = F))
 }
 

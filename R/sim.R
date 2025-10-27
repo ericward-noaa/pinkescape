@@ -3,7 +3,7 @@
 #' @param time_steps The number of time steps, defaults to 100
 #' @param ricker_pars a dataframe of custom parameters for the Ricker model
 #' @param pr_12 The probability of transitioning from state 1 to 2, defaults to 0.1
-#' @param pr_21 The probability of transitioning from state 1 to 2, defaults to 0.1
+#' @param pr_21 The probability of transitioning from state 2 to 1, defaults to 0.1
 #' @param run Whether to run this for the odd or even broodline, defaults to "odd"
 #' @param deterministic_model Whether the deterministic escapement rule is used, defaults to TRUE
 #' @param rec_std Recruitment variability (lognormal sd), defaults to 0.1
@@ -48,7 +48,7 @@ sim <- function(sims = 1000, # number of simulations
                 seed = 123) {
 
   if(is.null(ricker_pars)) {
-    ricker_pars <- get_ricker()
+    ricker_pars <- ricker_defaults()
   }
   if(deterministic_model == FALSE) {
     ricker_pars$S_star = ricker_pars$S_star_stochastic
@@ -210,7 +210,7 @@ sim <- function(sims = 1000, # number of simulations
           harvest[t] = 0
           if(t > time_lag) {
             Smsy = -(1 - lambert_W0(exp(1 - ricker_pars$a[x[t - time_lag]]))) / ricker_pars$b[x[t - time_lag]] # https://peerj.com/articles/1623/
-            if(1 > time_lag) harvest[t] = max(rec - Smsy, 0)
+            if(1 > time_lag) harvest[t] = max(rec[t] - Smsy, 0)
             optimal_escapement[t] = Smsy
             if(t > time_lag) harvest[t] = max(rec[t] - Smsy, 0)
           }
