@@ -87,12 +87,14 @@
 <h2 id="usage">Usage<a class="anchor" aria-label="anchor" href="#usage"></a>
 </h2>
 <p>The package consists of a single function for simulating data, with the following arguments. Additional details can be found in the help file</p>
-<p>```{r, eval=FALSE} library(pinkescape)</p>
+<p>```{r, eval=FALSE}</p>
+<p>library(pinkescape)</p>
 <p>df = sim( sims = 1000, time_steps = 100, pr_12 = 0.1, pr_21 = 0.1, run = “odd”, deterministic_model = TRUE, rec_std = 0.1, rec_acf = 0.7, escapement_rule = “both”, discount_rate = 0.1, seed = 123 )</p>
 <pre><code>
 ## Plotting output
 
 ```{r, eval=FALSE}
+
 library(ggplot2)
 p1 &lt;- ggplot(df, aes(t, regime)) + geom_point() + geom_line() +
   theme_bw() + xlab("Time") + ylab("Regime")
@@ -104,19 +106,26 @@ p4 &lt;- ggplot(df, aes(t, harvest)) + geom_point() + geom_line() +
   theme_bw() + xlab("Time") + ylab("Harvest")
 p5 &lt;- ggplot(df, aes(t, harvest)) + geom_point() + geom_line() +
   theme_bw() + xlab("Time") + ylab("Benefits")
-gridExtra::grid.arrange(p1,p2,p3,p4,p5,ncol=2)</code></pre>
+gridExtra::grid.arrange(p1,p2,p3,p4,p5,ncol=2)
+</code></pre>
 </div>
 <div class="section level2">
 <h2 id="calculating-net-benefits-across-simulations">Calculating net benefits across simulations<a class="anchor" aria-label="anchor" href="#calculating-net-benefits-across-simulations"></a>
 </h2>
-<p>```{r, eval=FALSE} # calculate product df<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi><mi>i</mi><mi>s</mi><mi>c</mi><mi>o</mi><mi>u</mi><mi>n</mi><msub><mi>t</mi><mi>n</mi></msub><mi>b</mi><mo>=</mo><mi>d</mi><mi>f</mi></mrow><annotation encoding="application/x-tex">discount_nb = df</annotation></semantics></math>net_benefits*df$discount</p>
+<p>```{r, eval=FALSE}</p>
 </div>
+</div>
+<div class="section level1">
+<h1 id="calculate-product">calculate product<a class="anchor" aria-label="anchor" href="#calculate-product"></a>
+</h1>
+<p>df<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi><mi>i</mi><mi>s</mi><mi>c</mi><mi>o</mi><mi>u</mi><mi>n</mi><msub><mi>t</mi><mi>n</mi></msub><mi>b</mi><mo>=</mo><mi>d</mi><mi>f</mi></mrow><annotation encoding="application/x-tex">discount_nb = df</annotation></semantics></math>net_benefits*df$discount</p>
 </div>
 <div class="section level1">
 <h1 id="calculate-the-sum-for-each-simulation">calculate the sum for each simulation<a class="anchor" aria-label="anchor" href="#calculate-the-sum-for-each-simulation"></a>
 </h1>
 <p>library(dplyr) summary = dplyr::group_by(df, sim) |&gt; dplyr::summarise(tot_ben = sum(discount_nb))</p>
-<p>ggplot(summary, aes(tot_ben)) + geom_histogram() + xlab(“Total benefits”) ```</p>
+<p>ggplot(summary, aes(tot_ben)) + geom_histogram() + xlab(“Total benefits”)</p>
+<p>```</p>
 </div>
 
   </div>
