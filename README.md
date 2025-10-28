@@ -4,7 +4,8 @@ output:
   pdf_document: default
 ---
 # pinkescape
-Repo for simulating pink salmon escapement
+This repository contains a packaged version of R code used for the paper by K. Berry / D. Finnoff et al. 
+Pkgdown version of the functions can be found [https://ericward-noaa.github.io/pinkescape/](https://ericward-noaa.github.io/pinkescape/)
 
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/ericward-noaa/pinkescape/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/ericward-noaa/pinkescape/actions/workflows/R-CMD-check.yaml)
