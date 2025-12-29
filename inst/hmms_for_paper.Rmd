@@ -1,0 +1,385 @@
+---
+title: "Hidden Markov Models for environmental covariates (Ohlberger et al.)"
+output:
+  word_document: default
+  pdf_document: default
+---
+
+## Approach
+
+Using the covariates in Ohlberger et al., we can fit some simple HMMs to the environmental data to identify regimes and estimate transition probabilities. 
+
+## SST - only
+
+Jan's model included spring SST anomalies in the easter Gulf of Alaska, and those deviations can be included as an initial response to be modeled.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message=FALSE, warning=FALSE)
+max_iter = 10
+```
+
+```{r echo=FALSE}
+library(ggplot2)
+library(depmixS4)
+d = read.csv("data.csv")
+
+# fit HMM to SST data alone
+df = data.frame(year = d$Year, y = d$egoa.spr.sst)
+
+  # options for family are binomial, Gamma, gaussian, poisson, multinomial
+mod <- depmix(list(y ~ 1), 
+                family = list(gaussian()),
+                data = df, nstates = 2, 
+                em.control = list(maxit=2000, tol=1e-12))
+  
+fm <- fit(mod, verbose = FALSE) 
+#get the estimated state for each timestep 
+post_states <- depmixS4::posterior(fm)
+
+df$states = as.character(post_states[,1])
+ggplot(df, aes(year, y)) + 
+  geom_rect(aes(xmin = year - 0.5, xmax = year + 0.5, 
+                ymin = -Inf, ymax = Inf, fill = states), 
+            alpha = 0.3) +
+  geom_line(color = "grey20", size = 0.8) + 
+  #geom_point(color = "grey20", size = 2) + 
+  theme_bw() + 
+  scale_fill_viridis_d(option = "magma", begin = 0.3, end = 0.8) +
+  xlab("") + 
+  ylab("Spring SST anomaly (GOA)") +
+  labs(fill = "State")
+ggsave("HMM_figure.png", width=7, height=6)
+```
+
+
+```{r}
+# df$state = depmixS4::posterior(fm)[,1]
+# 
+# ggplot(df, aes(year, state)) + geom_line() + geom_point() + 
+#   theme_bw() + xlab("") + ylab("Estimated state")
+
+```
+
+```{r}
+table(post_states$state)
+```
+
+We can also extract the transition matrix, which is 
+
+```{r}
+m = matrix(0,2,2)
+rownames(m) = c("From 1", "From 2")
+colnames(m) = c("To 1", "To 2")
+m[1,] = fm@transition[[1]]@parameters$coefficients
+m[2,] = fm@transition[[2]]@parameters$coefficients
+knitr::kable(m,digits = 3)
+```
+
+
+
+We can also extract the transition matrix, which is 
+
+```{r}
+m = matrix(0,2,2)
+rownames(m) = c("From 1", "From 2")
+colnames(m) = c("To 1", "To 2")
+m[1,] = fm@transition[[1]]@parameters$coefficients
+m[2,] = fm@transition[[2]]@parameters$coefficients
+knitr::kable(m,digits = 3)
+```
+
+\break
+
+### Notes:
+
+During our call on 12/10, we discussed a couple options for extending these models to make them more useful. Specifically, we discussed modeling the following responses: 
+
+* Harvests
+* Run Size
+* Productivity, ln(R/S)
+
+For each of the above, we also could include hatchery releases as a potential driver (lags discussed below).
+
+### Harvest models
+
+```{r}
+ggplot(d, aes(Year, log(PWS_pink_harvests))) + geom_line() + geom_point() +
+  theme_bw() + xlab("") + ylab("PWS harvest, ln(millions)")
+```
+
+Because this increases so fast early in the time series, we might want to restrict the model to years 1985 - present. The challenge here is that the model wants to assign all recent years to a single state, which isn't very interesting. The choice of year doesn't really affect this (though when only data from the mid-1990s onward is used, the HMM just filters out high vs low pink years, so is oscillating back and forth nearly every year). 
+
+```{r results="hide"}
+
+sub = dplyr::filter(d,Year>=1985, Year <= 2018)
+
+sub$covar = log(sub$PWS_released_prev_Total)
+
+models = expand.grid(mean_cov = c("Year","1"),
+                     trans_cov = c("Year","1"))
+models$aic = 0
+best_aic = 1.0e10
+
+for(i in 1:nrow(models)) {
+  # specifications of how to model,
+# coming from somewhere else
+outcome <- "log(PWS_pink_harvests)"
+
+f1 <- as.formula(
+  paste(outcome, 
+        paste(models$mean_cov[i], collapse = " + "), 
+        sep = " ~ "))
+f2 <- as.formula(
+  paste("",
+        paste(models$trans_cov[i], collapse = " + "), 
+        sep = " ~ "))
+
+  mod <- depmix(list(f1), 
+              transition = f2,
+                family = list(gaussian()),
+                data = sub, nstates = 2, 
+                em.control = list(maxit=2000, tol=1e-12))
+
+    best_aic = 1.0e10
+  for(iter in 1:max_iter) {
+    set.seed(iter ^ 2)
+    fm <- fit(mod, verbose = FALSE)
+    if(AIC(fm) < best_aic) {
+      best_aic = AIC(fm)
+      best_model = fm
+    }
+  } 
+  models$aic[i] = AIC(fm)
+  if(models$aic[i] < best_aic) {
+    best_model = fm
+    best_aic = models$aic[i]
+  }
+}
+
+
+#get the estimated state for each timestep 
+post_states <- depmixS4::posterior(best_model)
+
+sub$state = depmixS4::posterior(best_model)[,1]
+
+```
+```{r}
+
+sub$state = as.factor(sub$state)
+ggplot(sub, aes(Year, log(PWS_pink_harvests), col = state, group=NA)) + geom_line() + geom_point() + 
+  theme_bw() + xlab("") + ylab("log(PWS_pink_harvests)")
+
+```
+
+
+Second, we can try to model this as driven by pink salmon releases. That time series looks like this. The releases will be lagged one year here. 
+
+```{r}
+ggplot(dplyr::filter(d,Year<2020), aes(Year, PWS_released_Total)) + geom_line() + geom_point() +
+  theme_bw() + xlab("") + ylab("PWS releases, (millions)")
+```
+
+Including the releases as a driver doesn't seem to do much, but letting the mean of each state be linearly changing over time lets the model separate out high/low pink salmon years.
+
+```{r results="hide"}
+sub = dplyr::filter(d,Year>=1985, Year <= 2018)
+
+sub$covar = log(sub$PWS_released_prev_Total)
+
+models = expand.grid(mean_cov = c("Year","covar","1","Brood.Line"),
+                     trans_cov = c("Year","covar","1","Brood.Line"))
+models$aic = 0
+best_aic = 1.0e10
+for(i in 1:nrow(models)) {
+  # specifications of how to model,
+# coming from somewhere else
+outcome <- "log(PWS_pink_harvests)"
+
+f1 <- as.formula(
+  paste(outcome, 
+        paste(models$mean_cov[i], collapse = " + "), 
+        sep = " ~ "))
+f2 <- as.formula(
+  paste("",
+        paste(models$trans_cov[i], collapse = " + "), 
+        sep = " ~ "))
+
+  mod <- depmix(list(f1), 
+              transition = f2,
+                family = list(gaussian()),
+                data = sub, nstates = 2, 
+                em.control = list(maxit=2000, tol=1e-12))
+  this_aic = 1.0e10
+  for(iter in 1:max_iter) {
+    set.seed(iter ^ 2)
+    fm <- try(fit(mod, verbose = FALSE), silent = TRUE)
+    if(class(fm)!="try-error") {
+      if(AIC(fm) < this_aic) {
+        this_aic = AIC(fm)
+        fm_model = fm
+      }
+    }
+  }
+  
+  models$aic[i] = AIC(fm_model)
+  if(models$aic[i] < best_aic) {
+    best_model = fm
+    best_aic = models$aic[i]
+  }
+}
+
+#get the estimated state for each timestep 
+post_states <- depmixS4::posterior(best_model)
+
+sub$state = as.factor(depmixS4::posterior(best_model)[,1])
+
+```
+
+```{r}
+ggplot(sub, aes(Year, log(PWS_pink_harvests), col=state, group=NA)) + geom_line() + geom_point() + 
+  theme_bw() + xlab("") + ylab("") + ggtitle("log(PWS_pink_harvests)")
+```
+
+```{r}
+knitr::kable(models, digits=3)
+```
+
+\break  
+
+### Run size models
+
+```{r results = "hide"}
+sub = dplyr::filter(d,Year>=1985, Year <= 2018)
+
+sub$covar = log(sub$PWS_released_prev_Total)
+
+models = expand.grid(mean_cov = c("Year","covar","1","Brood.Line"),
+                     trans_cov = c("Year","covar","1","Brood.Line"))
+models$aic = 0
+best_aic = 1.0e10
+for(i in 1:nrow(models)) {
+  # specifications of how to model,
+# coming from somewhere else
+outcome <- "log(Run.Size)"
+
+f1 <- as.formula(
+  paste(outcome, 
+        paste(models$mean_cov[i], collapse = " + "), 
+        sep = " ~ "))
+f2 <- as.formula(
+  paste("",
+        paste(models$trans_cov[i], collapse = " + "), 
+        sep = " ~ "))
+
+  mod <- depmix(list(f1), 
+              transition = f2,
+                family = list(gaussian()),
+                data = sub, nstates = 2, 
+                em.control = list(maxit=2000, tol=1e-12))
+
+  this_aic = 1.0e10
+  for(iter in 1:max_iter) {
+    set.seed(iter ^ 2)
+    fm <- try(fit(mod, verbose = FALSE), silent = TRUE)
+    if(class(fm)!="try-error") {
+      if(AIC(fm) < this_aic) {
+        this_aic = AIC(fm)
+        fm_model = fm
+      }
+    }
+  }
+  
+  models$aic[i] = AIC(fm_model)
+  if(models$aic[i] < best_aic) {
+    best_model = fm
+    best_aic = models$aic[i]
+  }
+}
+
+
+#get the estimated state for each timestep 
+post_states <- depmixS4::posterior(best_model)
+
+sub$state = as.factor(depmixS4::posterior(best_model)[,1])
+```
+
+Here, the best model is a model that lets the means (state 1/2) vary by brood line. And hatchery releases are included as a covariate on the transition matrix so that the probability of switching is also increasing over time (as a function of releases).  
+
+```{r}
+ggplot(sub, aes(Year, log(Run.Size), col = state, group=NA)) + geom_line() + geom_point() + 
+  theme_bw() + xlab("") + ylab("log(Run.Size)") + ggtitle ("Run size models")
+```
+
+```{r}
+knitr::kable(models, digits=3)
+```
+
+\break  
+
+### Productivity models
+
+```{r results = "hide"}
+sub = dplyr::filter(d,Year>=1985, Year <= 2018)
+
+sub$covar = log(sub$PWS_released_prev_Total)
+
+models = expand.grid(mean_cov = c("Year","covar","1", "Brood.Line"),
+                     trans_cov = c("Year","covar","1", "Brood.Line"))
+models$aic = 0
+best_aic = 1.0e10
+for(i in 1:nrow(models)) {
+  # specifications of how to model,
+# coming from somewhere else
+outcome <- "lnRS"
+
+f1 <- as.formula(
+  paste(outcome, 
+        paste(models$mean_cov[i], collapse = " + "), 
+        sep = " ~ "))
+f2 <- as.formula(
+  paste("",
+        paste(models$trans_cov[i], collapse = " + "), 
+        sep = " ~ "))
+
+  mod <- depmix(list(f1), 
+              transition = f2,
+                family = list(gaussian()),
+                data = sub, nstates = 2, 
+                em.control = list(maxit=2000, tol=1e-12))
+
+  this_aic = 1.0e10
+  for(iter in 1:max_iter) {
+    set.seed(iter ^ 2)
+    fm <- try(fit(mod, verbose = FALSE), silent = TRUE)
+    if(class(fm)!="try-error") {
+      if(AIC(fm) < this_aic) {
+        this_aic = AIC(fm)
+        fm_model = fm
+      }
+    }
+  }
+  
+  models$aic[i] = AIC(fm_model)
+  if(models$aic[i] < best_aic) {
+    best_model = fm
+    best_aic = models$aic[i]
+  }
+}
+
+
+#get the estimated state for each timestep 
+post_states <- depmixS4::posterior(best_model)
+
+sub$state = as.factor(depmixS4::posterior(best_model)[,1])
+
+ggplot(sub, aes(Year, lnRS, col = state, group=NA)) + geom_line() + geom_point() + 
+  theme_bw() + xlab("") + ylab("lnRS") + ggtitle ("Productivity models")
+
+```
+
+The best model of productivity includes hatchery releases as a predictor of the state means -- but not transition probabilities.  
+
+```{r}
+knitr::kable(models, digits=3)
+```
+
