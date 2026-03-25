@@ -122,6 +122,36 @@ for(run_type in c("odd","even")) {
   }
   saveRDS(dfs, file = paste0("model_output/",run_type,"/",run_name,".rds"))
 }
+
+run_name = "more_time_lags"
+time_lags = seq(0,20)
+
+for(run_type in c("odd","even")) {
+  dfs = list()
+  for(i in 1:length(time_lags)) {
+  
+  dfs[[i]] = sim(
+    sims = 1000,
+    time_steps = 100,
+    run = run_type,
+    deterministic_model = TRUE,
+    pr_12 = 0.118,
+    pr_21 = 0.202,
+    escapement_rule = "both",
+    harvest_CV = 0,
+    discount_rate = 0.1,
+    price_linear_change = 0,
+    price_acf = 0,
+    price_cv = 0,
+    time_lag = time_lags[i],
+    rec_std = 0.1,
+    msy_scenario = "msy",
+    seed = 123
+  )
+  dfs[[i]]$scenario <- paste(time_lags[i])
+  }
+  saveRDS(dfs, file = paste0("model_output/",run_type,"/",run_name,".rds"))
+}
 ```
 
 These plots demonstrate that a quick management response has a huge impact on total net benefits. The faster response scenario (time lag = 0) also translates into higher cumulative recruitment and harvest.

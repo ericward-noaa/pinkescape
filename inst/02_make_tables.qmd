@@ -1,6 +1,6 @@
 ---
 title: "Make tables"
-format: pdf
+format: docx
 editor: visual
 ---
 
@@ -27,7 +27,8 @@ scenarios = expand.grid(run_name = c("rec_sd",
              "transprob",
              "transprob_pricevar",
              "harvest_CV",
-             "harvest_CV_pricevar"),
+             "harvest_CV_pricevar", 
+             "more_time_lags"),
              run_type = c("odd","even"))
 tabl_harvest = list()
 tabl_benrec = list()
@@ -61,6 +62,7 @@ for(i in 1:nrow(scenarios)) {
                        upper_75 = quantile(n_zeros,0.75))
 # this is separated so that summary_all can be used below
 summary = summary_all |>
+  dplyr::mutate(ann_esc = rec-harvest) |>
   dplyr::group_by(t, scenario) |> 
   dplyr::summarise(lo25_acnb = quantile(acum_ben, 0.25),
                    hi75_acnb = quantile(acum_ben, 0.75),
@@ -112,7 +114,7 @@ summary = summary_all |>
                    ann_rec_mean = mean(rec),
                    cv_rec = sd(rec) / mean(rec),
                    zero_ann_rec = length(which(rec==0))/length(rec),
-                   ann_esc= rec-harvest,
+                   #ann_esc= rec-harvest,
                    ann_esc_mean=mean(ann_esc),
                    ann_esc_lo25 = quantile(ann_esc, 0.25),
                    ann_esc_hi75 = quantile(ann_esc, 0.75),
