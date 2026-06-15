@@ -1,4 +1,3 @@
-
 test_that("ricker_defaults returns correct structure", {
   params <- ricker_defaults()
 
@@ -255,8 +254,8 @@ test_that("summarize_simulations works with simulation output", {
   # Should return a data frame
   expect_s3_class(summary, "data.frame")
 
-  # Should have one row per time step
-  expect_equal(nrow(summary), 200)
+  # Should have one row per reported time step (summary collapses across sims)
+  expect_equal(nrow(summary), length(unique(sim_results$t)))
 
   # Check key columns exist
   expect_true("t" %in% names(summary))
@@ -277,7 +276,7 @@ test_that("summarize_simulations handles scenarios", {
   summary <- summarize_simulations(combined)
 
   # Should have rows for each scenario x time step
-  expect_equal(nrow(summary), 100)  # 10 time steps x 2 scenarios
+  expect_equal(nrow(summary), 2 * length(unique(combined$t)))  # scenarios x distinct time steps
   expect_true("scenario" %in% names(summary))
   expect_equal(length(unique(summary$scenario)), 2)
 })

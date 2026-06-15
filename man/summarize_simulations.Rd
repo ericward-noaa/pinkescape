@@ -12,8 +12,20 @@ summarize_simulations(df, quantiles = c(0.25, 0.75))
 \item{quantiles}{a 2 element vector containing the quantiles to be reported (along with mean and median). Defaults to c(0.25, 0.75)}
 }
 \value{
-data frame of default parameters for simulations
+data frame of summarized simulations
 }
 \description{
 summarize_simulations returns summaries of benefits, harvest, and recruitment
+}
+\details{
+Two changes from the earlier version, in addition to the \code{.data} pronoun used throughout to
+silence the "no visible binding for global variable" check NOTE:
+\itemize{
+\item Escapement is computed per simulation / per time step in \code{mutate()} (\code{esc = rec - harvest})
+and then summarized like the other quantities. Previously \code{ann_esc = rec - harvest} was
+computed inside the grouped \code{summarise()}, which returns a vector rather than one value per
+group and errors on dplyr >= 1.1.
+\item \code{arrange()} before the cumulative sums makes \code{cumsum()} order-safe, and \code{.groups = "drop"}
+returns an ungrouped frame and silences the grouped-output message.
+}
 }

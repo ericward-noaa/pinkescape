@@ -21,6 +21,7 @@ sim(
   price_acf = 0.7,
   price_cv = 0,
   time_lag = 0,
+  use_price_feedback = NULL,
   msy_scenario = NULL,
   seed = 123
 )
@@ -58,10 +59,20 @@ escapement rule is used}
 \item{price_cv}{The coefficient of variation, or standard deviation in log space of prices. Defaults to 0 (realistic values based on time series of pink salmon prices in Prince William Sound, 1984 - 2021 = 0.1)}
 
 \item{time_lag}{Optional, represents a delay in how fast response is to the actual regime. Defaults to
-0 but could be a positive integer (e.g. 10) to represent delays in the decision making process}
+0 but could be a positive integer (e.g. 10) to represent delays in the decision making process.
+At time t the manager sets escapement using the regime as it was \code{time_lag} steps earlier,
+i.e. \code{x[t - time_lag]}; during the first \code{time_lag} steps the oldest available
+observation (the initial regime) is used. See Details for how this differs from earlier versions.}
+
+\item{use_price_feedback}{Controls which escapement rule is used. If \code{NULL} (default), the
+price-feedback optimizer is used whenever prices vary (\code{price_cv != 0} or
+\code{price_linear_change != 0}); otherwise \code{msy_scenario} is used. This reproduces the
+original (implicit) dispatch. Set \code{FALSE} to force the \code{msy_scenario} rule even with
+dynamic prices (e.g. a clean "declining prices on a fixed MSY rule" comparison), or \code{TRUE}
+to force the feedback optimizer.}
 
 \item{msy_scenario}{Scenario for maximum sustainable yield (MSY). Defaults to "equilibrium" where values are constant regardless of spawner abundance. Can
-also be "msy", where values are updated each year}
+also be "msy", where values are updated each year. Only used when price feedback is off (see \code{use_price_feedback}).}
 
 \item{seed}{Seed for random number generation, defaults to 123}
 }

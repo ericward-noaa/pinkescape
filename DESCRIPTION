@@ -1,7 +1,7 @@
 Package: pinkescape
 Type: Package
 Title: Simulate Pink Salmon Escapement
-Version: 0.1.0
+Version: 0.2.0
 Authors@R: c(
     person(c("Eric", "J."), "Ward", role = c("aut", "cre"), 
       email = "eric.ward@noaa.gov"),
@@ -13,11 +13,12 @@ Maintainer: Eric Ward <eric.ward@noaa.gov>
 Description: The package simulates salmon escapement across multiple regimes and calculates net economic benefits of harvest.
 License: GPL (>=3)
 Depends:
-    R (>= 3.4.0)
+    R (>= 4.1.0)
 Imports:
     dplyr,
     ggplot2,
-    gsl
+    gsl,
+    rlang
 Suggests:
     testthat,
     knitr,
@@ -25,7 +26,7 @@ Suggests:
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.3
 SystemRequirements: GNU make
 Biarch: true
 VignetteBuilder: knitr
+Config/roxygen2/version: 8.0.0
